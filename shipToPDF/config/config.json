@@ -1,0 +1,18 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/config.2.0.schema.json",
+  "version": "2.0",
+  "bundles": {
+    "ship-work-command-set": {
+      "components": [
+        {
+          "entrypoint": "./lib/extensions/shipWork/ShipWorkCommandSet.js",
+          "manifest": "./src/extensions/shipWork/ShipWorkCommandSet.manifest.json"
+        }
+      ]
+    }
+  },
+  "externals": {},
+  "localizedResources": {
+    "ShipWorkCommandSetStrings": "lib/extensions/shipWork/loc/{locale}.js"
+  }
+}
