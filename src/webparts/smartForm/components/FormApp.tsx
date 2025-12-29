@@ -46,6 +46,101 @@ const RELOAD_GUARD_LIST_TITLE = "ReloadGuard";
 const RELOAD_GUARD_USER_FIELD = "User";          // Person field
 const RELOAD_GUARD_FLAG_FIELD = "HasReloadedOnce"; // Boolean field
 
+async function sleep(ms: number) {
+  return new Promise(res => setTimeout(res, ms));
+}
+export function buildPmoUpdatePayloadFromItem(pmoItem: any) {
+  // Fields you should NOT update back to SharePoint
+  const BLOCK = new Set([
+    "Id",
+    "GUID",
+    "Created",
+    "Modified",
+    "Author",
+    "Editor",
+    "AuthorId",
+    "EditorId",
+    "Attachments",
+    "AttachmentFiles",
+    "FileRef",
+    "FileLeafRef",
+    "odata.type",
+    "__metadata",
+    "Integration",
+  ]);
+
+  const out: any = {};
+
+  for (const [k, v] of Object.entries(pmoItem ?? {})) {
+    if (BLOCK.has(k)) continue;
+
+    // reuse your helper: normalizeForSp
+    const nv = normalizeForSp(v);
+    if (nv !== undefined) out[k] = nv;
+  }
+  console.log("out ", out); 
+  return out;
+}
+
+
+export async function updateAutoCreatedPmoDecisionItem(params: {
+  sp: any;
+  integrationId: number;
+  pmoItem: any;
+  pmoLinkFieldInternalName: string; // למשל "NTA_x0020_REFERENCE"
+  pmoListID?: string;
+}) {
+  const {
+    sp,
+    integrationId,
+    pmoItem,
+    pmoLinkFieldInternalName  = "Integration",
+    pmoListID = "e5e8eaea-16db-49d3-ad7c-62f5a2bdd97a",
+  } = params;
+
+  const pmoList = sp.web.lists.getById(pmoListID);
+
+  // Lookup filter must be on "<InternalName>Id"
+  const linkIdField = pmoLinkFieldInternalName.endsWith("Id")
+    ? pmoLinkFieldInternalName
+    : `${pmoLinkFieldInternalName}Id`;
+
+  const maxTries = 30;
+  for (let i = 0; i < maxTries; i++) {
+    console.log("💄");
+    const one = await pmoList.items
+      .select("*")
+      ();
+
+    console.log(" integrationId ", integrationId, " 1 one ", one);  
+    const two = await pmoList.items
+      .filter(`IntegrationId eq ${integrationId}`)();
+    console.log("2 two ", two); 
+    const found = await pmoList.items
+      .filter(`IntegrationId eq ${integrationId}`)
+      .select("Id")
+      .top(1)();
+    console.log("🤢");
+    if (found?.length) {
+      console.log("🥳");
+      const pmoDecisionId = found[0].Id;
+      const updatePayload = buildPmoUpdatePayloadFromItem(pmoItem);
+      console.log("🎆 updatePayload ", updatePayload);
+      await pmoList.items.getById(pmoListID).update(updatePayload);
+      console.log("🎆");
+      return { ok: true, pmoDecisionId };
+    }
+
+    await sleep(700);
+  }
+
+  throw new Error(
+    `לא נמצא פריט אוטומטי ב-${pmoListID} עבור IntegrationId=${integrationId}. בדקי שהאוטומציה ממלאת את השדה ${linkIdField}.`
+  );
+}
+
+
+
 function normalizePayloadForSpAdd(payload: any) {
   const out: any = {};
   for (const [k, v] of Object.entries(payload)) {
@@ -89,6 +184,8 @@ export function buildIntegrationPayloadFromPmo(
     const nv = normalizeForSp(v);
     if (nv !== undefined) payload[integrationInternal] = nv;
   }
+
+  payload['DecisionAppliesToOtherWorksTende0'] = true;
 
 
   // תוספות/override (למשל TenderNumber לכל פריט חדש)
@@ -147,7 +244,17 @@ export async function splitTenderAndCreateIntegrationItems(params: {
 
     const fixed = normalizePayloadForSpAdd(payload);
     console.log("✅ fixed payload", fixed);
-    await list.items.add(fixed);
+    const addRes = await list.items.add(fixed);
+    const integrationId = addRes?.data?.Id ?? addRes?.Id; 
+    await updateAutoCreatedPmoDecisionItem({
+      sp,
+      integrationId,
+      pmoItem,
+      // כאן תכתבי את השם הפנימי של שדה הקישור ב-PMO decisions:
+      pmoLinkFieldInternalName: "IntegrationItemId", // ← לדוגמה, תחליפי לשם האמיתי אצלכם
+    });
+
+
   }
 }
 
@@ -357,7 +464,7 @@ console.log("🎍 6 ");
     (Object.keys(ROLE_COLUMNS) as Array<"M1" | "M2" | "M3">).forEach(role => {
       for (const col of ROLE_COLUMNS[role]) {
         if (emailInTextField(row[col])) {
-          console.log("emailInTextField(row[col]  ", row[col])
+          console.log("emailInTextField(row[col]  ", row[col]);
           roles.add(role);
         }
       }
@@ -901,7 +1008,7 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
 
   // מחזיר שם תצוגה (View) לפי הערך של TenderPhase ברשימת Integration
   const getViewNameForTenderPhase = (rawPhase: string): string => {
-    const phase = (rawPhase || '').toLowerCase();
+    const phase = (rawPhase || '');//.toLowerCase();
 
     if (phase.indexOf('Phase 1') === 0) {
       return 'Phase 1';      // שם ה-View ברשימת PMO
@@ -1370,7 +1477,6 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
       }
 
       
-      console
       const v = pmoDraft ? pmoDraft[internal] : undefined;
 
       if(internal === "RFCresponseAsPublishedToBeFilled"){
@@ -1856,7 +1962,7 @@ const typeStr = String(info?.TypeAsString || '').toLowerCase();
   const tenderPhaseStr = String(tenderPhaseRaw ?? '').toLowerCase();
 
   // מספיק שאו שזה בדיוק "1" או שמופיע בו "phase 1"
-  const isPhase1 = tenderPhaseStr === 'phase 1 - bidders’ requests for clarifications (rfcs) of tender documents' && tenderPhaseStr.indexOf('phase 1') != -1;
+  const isPhase1 = tenderPhaseStr === 'phase 1 - bidders’ requests for clarifications (rfcs) of tender documents' || tenderPhaseStr.indexOf('phase 1') != -1;
 
   if (isPhase1 && !base.includes('StatusOfRFCresponseOrTcRFC')) {
     base.push('StatusOfRFCresponseOrTcRFC');
