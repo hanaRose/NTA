@@ -7,6 +7,8 @@ import {
   IListViewCommandSetListViewUpdatedParameters,
   RowAccessor
 } from '@microsoft/sp-listview-extensibility';
+  import { SPHttpClient } from '@microsoft/sp-http'; // ודאי שיש לך את זה למעלה בקובץ
+
 
 import {
   Document,
@@ -55,7 +57,7 @@ export default class ShipWorkCommandSet
       cmd1.visible = hasSelection; // כפתור יצוא – רק אם יש בחירה
     }
   }
-
+  /*
   @override
   public async onExecute(event: IListViewCommandSetExecuteEventParameters): Promise<void> {
     switch (event.itemId) {
@@ -94,96 +96,51 @@ export default class ShipWorkCommandSet
       default:
         break;
     }
-  }
-
-  // ================== קריאה לרשימת Integration ==================
-
-  /**
-   * מוצא את ID של פריט ה-Integration מתוך שורת PMO:
-   * 1. מנסה Integration / IntegrationId דרך getValueByName
-   * 2. אם לא הצליח – נכנס למפה הפנימית _values ומחפש key שמכיל "Integration" ו-"Id"
-
-  private _getIntegrationLookupId(row: RowAccessor): number | undefined {
-    try {
-      let lookupVal: any = row.getValueByName('Integration');
-
-      if (!lookupVal) {
-        lookupVal = row.getValueByName("lookupId");
-      }
-      console.log("row.getValueByName('Integration') ", row.getValueByName('Integration'));
-      console.log('lookupVal.lookupId', row.getValueByName('Integration').lookupId);
-      console.log('row.getValueByName("lookupId");', row.getValueByName("lookupId"));
-
-      let integrationId: number | undefined;
-      
-
-      const val: any = row.getValueByName('Integration');
-
-      if (!val) return undefined;
-
-      // במקרה שזה מערך (lookup multi או single)
-      if (Array.isArray(val) && val.length > 0) {
-          const obj = val[0];
-          if (obj && typeof obj.lookupId === 'number') {
-              return obj.lookupId;
-          }
-      }
-      integrationId = lookupVal.lookupId;
-
-      console.log('Final resolved Integration ID:', integrationId);
-      return integrationId;
-    } catch (e) {
-      console.warn('Error while resolving Integration lookup id from row', e);
-      return undefined;
-    }
   }*/
 
-  /**
-   * מקבל שורה מרשימת PMO decisions, מוצא את ה-lookup ל-Integration,
-   * ושואב את פריט ה-Integration המתאים ב-REST.
-
-  private async _fetchIntegrationItemForRow(row: RowAccessor): Promise<any | null> {
-    try {
-      const integrationId = this._getIntegrationLookupId(row);
-
-      if (!integrationId) {
-        console.warn('No Integration ID resolved for row:', row);
-        return null;
+@override
+public async onExecute(event: IListViewCommandSetExecuteEventParameters): Promise<void> {
+  switch (event.itemId) {
+    case 'COMMAND_1': {
+      const rows = event.selectedRows;
+      if (!rows || rows.length === 0) {
+        alert('Please select at least one item to export.');
+        return;
       }
 
-      const webUrl = this.context.pageContext.web.absoluteUrl;
+      try {
+        console.log('Integration rows selected:', rows);
 
-      // לוודא ששם הרשימה כאן זהה בדיוק לשם הרשימה באתר
-      const url =
-        `${webUrl}/_api/web/lists/getbytitle('Integration')/items(${integrationId})?$select=*`;
+        // 1) מביאים FULL ITEM לכל שורה שנבחרה ב-Integration (כולל כל העמודות)
+        const integrationItems = await Promise.all(
+          rows.map(r => this._fetchIntegrationItemForRow(r))
+        );
 
-      console.log('Fetching Integration item from URL:', url);
+        console.log('😑 Loaded Integration items array:', integrationItems);
 
-      const resp = await this.context.spHttpClient.get(
-        url,
-        SPHttpClient.configurations.v1,
-        {
-          headers: {
-            'Accept': 'application/json;odata=nometadata'
-          }
-        }
-      );
+        // 2) תמונות
+        const headerImg = await this._loadImage(HEADER_IMG_URL);
+        const footerImg = await this._loadImage(FOOTER_IMG_URL);
 
-      if (!resp.ok) {
-        console.warn('Failed to fetch Integration item', integrationId, resp.status);
-        return null;
+        // 3) בונים מסמך. (rows = שורות Integration, integrationItems = פריטים מלאים)
+        const doc = this._buildAgendaDocument(rows, integrationItems, headerImg, footerImg);
+
+        const blob = await Packer.toBlob(doc);
+        saveAs(blob, 'Integration_Agenda.docx');
+      } catch (e) {
+        console.error('Failed to build agenda document', e);
+        alert('Error while creating the agenda document. Check console for details.');
       }
-
-      const json = await resp.json();
-      console.log('Integration item loaded:', json);
-      return json;
-    } catch (e) {
-      console.warn('Error fetching Integration item for row', e);
-      return null;
+      break;
     }
-  }
-   */
 
+    default:
+      break;
+  }
+}
+
+  // ================== קריאה לרשימת Integration ==================
+/*
   private async _fetchIntegrationItemForRow(row: RowAccessor): Promise<any> {
   try {
     const lookup = row.getValueByName("Integration");
@@ -225,8 +182,103 @@ export default class ShipWorkCommandSet
     return null;
   }
 }
+*/
+/*
+private async _fetchIntegrationItemForRow(row: RowAccessor): Promise<any | null> {
+  try {
+    console.log("😕 row ", row);
+    // ברשימת Integration יש תמיד עמודת ID
+    const idRaw: any = row.getValueByName('ID') ?? row.getValueByName('Id');
+    console.log("🤫idRaw ", idRaw)
+    const itemId = Number(idRaw);
+    console.log("itemId ", itemId);
 
+    
+    if (!itemId || Number.isNaN(itemId)) {
+      console.warn('Could not resolve Integration item ID from selected row', { idRaw });
+      return null;
+    }
 
+    console.log('Fetching Integration item ID:', itemId);
+
+    const guid = '2c962132-409d-4bf2-9440-3b3b6c7975a0'; // GUID של Integration
+    const url =
+      `${this.context.pageContext.web.absoluteUrl}` +
+      `/_api/web/lists(guid'${guid}')/items(${itemId})?$select=*`;
+
+    const resp = await this.context.spHttpClient.get(
+      url,
+      SPHttpClient.configurations.v1,
+      { headers: { Accept: 'application/json;odata=nometadata' } }
+    );
+
+    if (!resp.ok) {
+      console.error('Failed to fetch Integration item', itemId, resp.status);
+      return null;
+    }
+
+    const item = await resp.json();
+    console.log('Integration item fetched:', item);
+    return item;
+  } catch (e) {
+    console.error('Error fetching Integration item', e);
+    return null;
+  }
+}
+*/
+
+  private async _fetchIntegrationItemForRow(row: RowAccessor): Promise<any | null> {
+    try {
+      const idRaw: any = row.getValueByName('ID') ?? row.getValueByName('Id');
+      const itemId = Number(idRaw);
+
+      if (!itemId || Number.isNaN(itemId)) {
+        console.warn('Could not resolve Integration item ID from selected row', { idRaw });
+        return null;
+      }
+
+      const guid = '2c962132-409d-4bf2-9440-3b3b6c7975a0';
+      const url =
+        `${this.context.pageContext.web.absoluteUrl}` +
+        `/_api/web/lists(guid'${guid}')/items(${itemId})?$select=*&$format=json`; // <-- כופה JSON
+
+      const resp = await this.context.spHttpClient.get(
+        url,
+        SPHttpClient.configurations.v1,
+        {
+          headers: {
+            Accept: 'application/json;odata=nometadata', // <-- זה ה-SharePoint "הקלאסי"
+            'odata-version': ''                         // <-- מונע בעיות OData
+          }
+        }
+      );
+
+      const contentType = resp.headers.get('content-type') || '';
+      const bodyText = await resp.text(); // קוראים טקסט כדי לא להיתקע על json()
+
+      if (!resp.ok) {
+        console.error('Failed to fetch Integration item', itemId, resp.status, bodyText.slice(0, 500));
+        return null;
+      }
+
+      // אם בכל זאת הגיע XML/HTML – נדפיס ונחזור null (כדי שתראי מה הוחזר)
+      if (!contentType.toLowerCase().includes('application/json')) {
+        console.error(
+          'Expected JSON but got:',
+          { itemId, contentType, preview: bodyText.slice(0, 500) }
+        );
+        return null;
+      }
+
+      const item = JSON.parse(bodyText);
+      console.log('Integration item fetched:', item);
+      return item;
+
+    } catch (e) {
+      console.error('Error fetching Integration item', e);
+      return null;
+    }
+  }
 
 
   // ================== בניית מסמך ה-Word ==================
@@ -319,6 +371,7 @@ export default class ShipWorkCommandSet
     // לכל פריט – טבלה לפי התבנית, שילוב PMO + Integration
     rows.forEach((row, index) => {
       const integ = integrationItems[index];
+      console.log("😁integ ", integ);
       const number = index + 1;
       children.push(...this._buildProposedChangeSection(row, integ, number));
     });
@@ -469,8 +522,11 @@ export default class ShipWorkCommandSet
       this._getTextFromIntegration(integrationItem, 'Explanation_x0028_s_x0029_Of_x00');
 
     const existingPmo = this._getTextFromRow(pmoRow, 'Existingwordingofapplicableprovi');
+
     const existingInt1 = this._getTextFromIntegration(integrationItem, 'Existingwordingofapplicableprovi');
     const existingInt2 = this._getTextFromIntegration(integrationItem, 'ExistingwordingofapplicableRFCre');
+    console.log("😎🤩 existingInt1 Existingwordingofapplicableprovi - ", existingInt1, " integration item ", integrationItem);
+    console.log("😎 existingInt2 ExistingwordingofapplicableRFCre  - ", existingInt2);
     const existing = existingPmo || existingInt1 || existingInt2;
 
     const proposedPmo = this._getTextFromRow(pmoRow, 'Proposedrevisions_x0028_s_x0029_');
@@ -505,7 +561,7 @@ export default class ShipWorkCommandSet
             this._valueCell(chapter || '[XXXXX]'),
             this._valueCell(section || '[XXXXX]'),
             this._valueCell(category || '[Technical / Legal / Financial]'),
-            this._valueCell(decision || '[Y/N]')
+            this._valueCell(decision || '[XXX]')
           ]
         }),
         new TableRow({
@@ -630,6 +686,7 @@ export default class ShipWorkCommandSet
 
   private _getTextFromIntegration(item: any | null | undefined, internalName: string): string {
     if (!item) return '';
+    console.log("🤩 integration item ", item); 
     try {
       const raw: any = item[internalName];
       if (raw === null || raw === undefined) return '';
