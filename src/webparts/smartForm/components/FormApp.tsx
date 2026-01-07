@@ -41,7 +41,7 @@ const CARD_BG = '#ffffff';
 const CARD_SHADOW = '0 14px 40px rgba(15, 23, 42, 0.12)';
 const CARD_RADIUS = 18;
 const ACCENT = '#00498f';
-const ACCENT_SOFT = '#e6f0ff';// ===== Reload Guard (per-user) =====
+//const ACCENT_SOFT = '#e6f0ff';// ===== Reload Guard (per-user) =====
 const RELOAD_GUARD_LIST_TITLE = "ReloadGuard";
 const RELOAD_GUARD_USER_FIELD = "User";          // Person field
 const RELOAD_GUARD_FLAG_FIELD = "HasReloadedOnce"; // Boolean field
@@ -244,15 +244,16 @@ export async function splitTenderAndCreateIntegrationItems(params: {
 
     const fixed = normalizePayloadForSpAdd(payload);
     console.log("✅ fixed payload", fixed);
-    const addRes = await list.items.add(fixed);
-    const integrationId = addRes?.data?.Id ?? addRes?.Id; 
+    await list.items.add(fixed);
+    /*const integrationId = addRes?.data?.Id ?? addRes?.Id; 
+    
     await updateAutoCreatedPmoDecisionItem({
       sp,
       integrationId,
       pmoItem,
       // כאן תכתבי את השם הפנימי של שדה הקישור ב-PMO decisions:
       pmoLinkFieldInternalName: "IntegrationItemId", // ← לדוגמה, תחליפי לשם האמיתי אצלכם
-    });
+    });*/
 
 
   }
@@ -601,9 +602,9 @@ function getPhaseViewKeyFromTenderPhase(tenderPhaseRaw?: string): string {
   if (!s) return '';
 
   // אם מתחיל ב־Phase 1 / Phase 2 / Phase 3 – ניקח את ה־prefix
-  if (s.indexOf('Phase 1')!= -1)  return 'Phase 1';
-  if (s.indexOf('Phase 2')!= -1) return 'Phase 2';
-  if (s.indexOf('Phase 3')!= -1) return 'Phase 3';
+  if (s.indexOf('phase 1')!= -1)  return 'Phase 1';
+  if (s.indexOf('phase 2')!= -1) return 'Phase 2';
+  if (s.indexOf('phase 3')!= -1) return 'Phase 3';
 
   // ברירת מחדל – אין סינון לפי תצוגה
   return '';
@@ -739,7 +740,9 @@ const FormApp: React.FC<FormAppProps> = ({
   "RevisedWordingFinalForPublicatio",//
   "IntegrationTeamDecisionImplement",//
   'DueDateCalculated',
-  'ActualDate'
+  'ActualDate',
+  'SubCategory',
+  'Assignedto'
 ];
 
   // 🆕 מפת תוויות קשיחה – fallback במקרה שאין internalToTitle מה-SharePoint
@@ -764,6 +767,8 @@ const PMO_LABEL_OVERRIDES: Record<string, string> = {
   INTEGRATIONTEAMSTATUS:'INTEGRATION TEAM STATUS',
   RFCorTcRFCasPublishedByNTaNew: 'RFCorTcRFCasPublishedByNTaNew',
   sentProtocol:'sentProtocol',
+  Assignedto: 'Assigned to',
+  SubCategory: 'Sub - Category'
 };
 
 
@@ -801,7 +806,9 @@ const PMO_TO_INTEGRATION_FIELD_MAP: Record<string, string> = {
   dog:'RFCorTcRFCasPublishedByNTaNew', //'RFC_x002f_TCRFCaspublishedbyNTA_',
   DueDateCalculated: 'Duedate',
   ActualDate: 'Actualdate',
-  // וכו' – תוסיפי/תמחקי לפי הצורך
+  RFCorTcRFCasPublishedByNTaToBeFi: 'RFC_x002f_TCRFCaspublishedbyNTA_',
+  SubCategory:'Sub_x002d_Category',
+  Assignedto:'Assignedto'
 };
 
 
@@ -810,6 +817,7 @@ async function syncPmoToIntegration(
   integrationId: number,
   pmoDraft: any
 ): Promise<void> {
+  console.log("🫧 saving to integration"); 
   if (!integrationId) return;
 
   const updatePayload: any = {};
@@ -842,6 +850,8 @@ async function syncPmoToIntegration(
     .update(updatePayload);
 }
 
+
+
   const filteredIntegrationChoices: IComboBoxOption[] = useMemo(() => {
     console.log("🦝🦝🦝🦝🦝🦝🦝🦝 filteredIntegrationChoices")
     //const q = integrationSearch.trim().toLowerCase();
@@ -867,7 +877,6 @@ async function syncPmoToIntegration(
 
 
     const loadIntegrationChoices = async () => {
-      console.log("loadIntegrationChoices ")
 
       const items: any[] = await sp.web.lists
         .getById(INTEGRATION_LIST_ID)
@@ -912,6 +921,8 @@ async function syncPmoToIntegration(
       console.log("🥗 opts ", opts);
       setIntegrationChoices(opts);
     };
+
+/////////////////
 
     useEffect(() => {
       if (!sp) return;
@@ -1083,7 +1094,8 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
   // האם להציג את RFCResponseLetterNo? רק אם RevisionIncludesChangeInTenderDo = 'Y'
   const showRFCResponseLetterNo = React.useMemo(() => {
     const v = String(pmoDraft?.RevisionIncludesChangeInTenderDo ?? '').trim().toUpperCase();
-    return v === 'Y';
+    console.log("🎀[pmoDraft?.RevisionIncludesChangeInTenderDo]  -  v ", v);
+    return v === 'YES' ;
   }, [pmoDraft?.RevisionIncludesChangeInTenderDo]);
 
   React.useEffect(() => {
@@ -1114,49 +1126,36 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
   // אופציונלי: אם השדה מוסתר – ננקה את הערך כדי שלא יישמר בטעות
   React.useEffect(() => {
     if (!showRFCResponseLetterNo && pmoDraft?.RFCResponseLetterNo) {
-      //setPmoDraft((prev: any) => ({ ...prev, RFCResponseLetterNo: null }));
     }
   }, [showRFCResponseLetterNo, pmoDraft?.RFCResponseLetterNo]);
   //🎀
 
   const loadFormForIntegration = async () => {
 
-    console.log("🔮0");
     if (!integrationId) return;
     // Integration
-    console.log("🔮1");
     const integ = await fetchIntegrationItemByGuid(sp, integrationId);
-    console.log("🔮2");
     setIntegrationItem(integ);
-    console.log("🔮3");
 
     // 🔹 אחרי שקיבלנו את פריט ה-Integration – נטען שדות לפי View
     const tenderPhaseRaw = String(integ?.TenderPhase || '');
-    console.log("4🔮");
     await loadViewFieldOrderForPhase(tenderPhaseRaw);
-    console.log("5🔮");
     await loadIntegrationViewFieldOrderForPhase(tenderPhaseRaw);
-    console.log("6🔮");
 
     // PMO לפי lookup ל-Integration
     const { item: pmoFound, isNew } = await fetchOrCreatePmoByIntegration(
       sp, pmoListTitle, integrationId, pmoIntegrationLookupName
     );
-    console.log("7🔮");
     setPmoItem(pmoFound);
-    console.log("8🔮");
     setPmoDraft(pmoFound);
-    console.log("9🔮");
     // טעינת הרשאות לפי fieldPermission + קבוצות גלובליות + צוות מכרז מתוך ה-Integration
     const [permMap, general, tenderTeamUsers] = await Promise.all([
       loadFieldPermissionMap(sp),
       loadGeneralRoleUsers(sp),
-      null//loadTenderTeamUsersFromIntegration(sp, integrationId!)
+      null
     ]);
-    console.log("10🔮");
 
     setFieldPermMap(permMap);
-    console.log("11🔮");
     setRoleUsers({
       IntegrationTeam: general.IntegrationTeam,
       IntegrationTeamLawyer:  general.IntegrationTeamLawyer,
@@ -1172,15 +1171,12 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
       PMOIntegrationTeam: general.PMOIntegrationTeam,
       PMOTenderTeam: tenderTeamUsers?tenderTeamUsers:[""],   // ← חשוב: כאן נכנסת הרשאת "PMO צוות מכרז"
     });
-    console.log("12🔮");
 
     if (isNew) setMsg({ type: MessageBarType.success, text: 'A new PMO item linked to Integration has been created.' });
     else setMsg(null);
     // Labels + Meta ל-PMO
-    console.log("13🔮");
     //const pmoMaps = await getFieldMapsByTitle(sp, pmoListTitle);
     const pmoMaps = await getFieldMapsById(sp, PMO_LIST_ID);
-    console.log("14🔮");
     setPmoLabels(pmoMaps.internalToTitle);
     console.log("15🔮");
     //const fieldMap = await getFieldInfoMap(sp, pmoListTitle);
@@ -1266,7 +1262,7 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
       
       setMsg({ 
         type: MessageBarType.error, 
-        text: '😋Error loading initial data: ' + (e?.message || e) + "\n Please reload the page and everything will be ok."
+        text: 'Error loading initial data: ' + (e?.message || e) + "\n Please reload the page and everything will be ok."
       });
     } finally {
       setBusy(false);
@@ -1602,6 +1598,8 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
 
         
         console.log('🧾 draftToSave before save:', draftToSave);
+        console.log("🧪 before save RFCorTcRFCasPublishedByNTaToBeFi =", draftToSave.RFCorTcRFCasPublishedByNTaToBeFi);
+        console.log("🧪 in pmoDraft RFCorTcRFCasPublishedByNTaToBeFi =", pmoDraft?.RFCorTcRFCasPublishedByNTaToBeFi);
 
         const saved = await savePmoItem(sp, PMO_LIST_ID, pmoItem.Id, draftToSave);
        
@@ -1618,6 +1616,10 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
         try {
           if (integrationId) {
             //await syncPmoToIntegration(sp, integrationId, pmoDraft);
+            console.log("⭐Sub_x002d_Category typeof:", typeof draftToSave.Sub_x002d_Category, draftToSave.Sub_x002d_Category);
+            console.log("⭐SubCategory typeof:", typeof draftToSave.SubCategory, draftToSave.SubCategory);
+            console.log("⭐Assignedto typeof:", typeof draftToSave.Assignedto, draftToSave.Assignedto);
+
             await syncPmoToIntegration(sp, integrationId, draftToSave);
             console.log('✅ Synced PMO → INTEGRATION for item', integrationId);
           } else {
@@ -1627,18 +1629,21 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
           console.error('❌ Failed to sync PMO → INTEGRATION', syncErr);
           // לא מפילים למשתמש את השמירה – זה רק סנכרון עזר
         }
-        console.log("🏔️🏔️🏔️ integrationItem ", integrationItem);
-         console.log("🏔️🏔️🏔️ draftToSave ", draftToSave);
-       await splitTenderAndCreateIntegrationItems({
-        sp,
-        integrationListId: '2c962132-409d-4bf2-9440-3b3b6c7975a0',
-        pmoItem: draftToSave, // או draftToSave אם את בטוחה שהוא מלא ונקי
-        itegrationItem: integrationItem,
-        tenderSourceInternalName: "DecisionAppliesToOtherWorksTende", // או "TenderNumber"
-        pmoToIntegrationMap: PMO_TO_INTEGRATION_FIELD_MAP,
-        linkFieldInternalName: "NTA_x2019_s_x0020_reference", // אם קיים אצלכם
-        linkValue: draftToSave?.IntegrationId, // או saved?.Id — לפי מה שהשדה מצפה
-      });
+
+        if(options?.updateEditingDate){
+            await splitTenderAndCreateIntegrationItems({
+              sp,
+              integrationListId: '2c962132-409d-4bf2-9440-3b3b6c7975a0',
+              pmoItem: draftToSave, // או draftToSave אם את בטוחה שהוא מלא ונקי
+              itegrationItem: integrationItem,
+              tenderSourceInternalName: "DecisionAppliesToOtherWorksTende", // או "TenderNumber"
+              pmoToIntegrationMap: PMO_TO_INTEGRATION_FIELD_MAP,
+              linkFieldInternalName: "NTA_x2019_s_x0020_reference", // אם קיים אצלכם
+              linkValue: draftToSave?.IntegrationId, // או saved?.Id — לפי מה שהשדה מצפה
+            });  
+        }
+
+     
 
 
 
@@ -1688,7 +1693,7 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
         console.log("🛹 is system");
         return false;}
 
-      if (k === 'Id' || k === 'ID' || k === 'Title') return false;
+      if (k === 'Id' || k === 'ID' || k === 'Title'|| k === 'formCreator'|| k === 'LM_x2019_sreference'|| k === 'DocumentName' || k === 'DocumentReference'|| k === 'SectionName') return false;
       const info = integrationFieldInfoMap[k];
       
       if (info && info.Hidden === true) {
@@ -1700,12 +1705,12 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
     return (
       <Stack tokens={{ childrenGap: 10 }}>
         {keys.map(k => {
-  const raw = integrationItem[k];
-  const info = integrationFieldInfoMap[k];
+      const raw = integrationItem[k];
+      const info = integrationFieldInfoMap[k];
 
-  let text: string;
+      let text: string;
 
-const typeStr = String(info?.TypeAsString || '').toLowerCase();
+    const typeStr = String(info?.TypeAsString || '').toLowerCase();
   if(k === "RelatedBidderRFCsexist_x003f_" || k === "weretheRelatedBidderRFCsresponde"){
     text = '';
   }
@@ -1735,7 +1740,7 @@ const typeStr = String(info?.TypeAsString || '').toLowerCase();
       text = String(raw ?? '');
     }
 
-
+    console.log("🍋‍🟩integrationLabels[k]  ", integrationLabels[k] );
     return (
       <div
         key={k}
@@ -1917,7 +1922,7 @@ const typeStr = String(info?.TypeAsString || '').toLowerCase();
 
   const dynamicHideFieldstenders = React.useMemo<string[]>(() => {
     const base = ['Integration', 'IntegrationId', 'Id', 'ID', 'Title'];
-
+    console.log("🪺viewFieldOrder ", viewFieldOrder);
     // 1. יישור לפי ה-View: כל שדה שלא מופיע ב-View → מוסתר
     if (viewFieldOrder && viewFieldOrder.length && pmoDraft) {
       const allFields = Object.keys(pmoDraft);
@@ -1931,52 +1936,65 @@ const typeStr = String(info?.TypeAsString || '').toLowerCase();
       }
     }
 
-
-  // 2. לוגיקה של RevisionIncludesChangeInTenderDo
-  const rv = pmoDraft?.RevisionIncludesChangeInTenderDo;
-  const isYes = (() => {
-    if (typeof rv === 'boolean') return rv;
-    const s = String(rv ?? '').trim().toLowerCase();
-    return s === 'y' || s === 'yes' || s === 'true' || s === '1';
-  })();
-
-  if (!isYes) base.push('RFCResponseLetterNo');
-
-  // 3. 🔹 לוגיקה חדשה לפי sentProtocol
-  const rawSent = pmoDraft?.sentProtocol;
-  const sentStr = String(rawSent ?? '').trim();
-
-  // אם זה עמודת בחירה/טקסט עם "כן"
-  const isSentYes =
-    rawSent === true ||          // אם זה Yes/No (boolean)
-    sentStr === 'כן' ||          // אם זה טקסט בעברית
-    sentStr.toLowerCase() === 'yes'; // אם יבוא לך באנגלית בעתיד
-
-  // אם זה *לא* "כן" → מסתירים Addendum ו-IntegrationTeamDecisionImplement
-  if (!isSentYes) {
-    if (base.indexOf('Addendum') === -1) base.push('Addendum');
-    //if (base.indexOf(TARGET_FIELD) === -1) base.push(TARGET_FIELD);
-  }
-
-  const tenderPhaseRaw = pmoDraft?.TenderPhase;
-  const tenderPhaseStr = String(tenderPhaseRaw ?? '').toLowerCase();
-
-  // מספיק שאו שזה בדיוק "1" או שמופיע בו "phase 1"
-  const isPhase1 = tenderPhaseStr === 'phase 1 - bidders’ requests for clarifications (rfcs) of tender documents' || tenderPhaseStr.indexOf('phase 1') != -1;
-
-  if (isPhase1 && !base.includes('StatusOfRFCresponseOrTcRFC')) {
-    base.push('StatusOfRFCresponseOrTcRFC');
-  }
+    console.log("🏞️ base ", base);
 
 
+    // 2. לוגיקה של RevisionIncludesChangeInTenderDo
+    const rv = pmoDraft?.RevisionIncludesChangeInTenderDo;
+    const isYes = (() => {
+      if (typeof rv === 'boolean') return rv;
+      const s = String(rv ?? '').trim().toLowerCase();
+      return s === 'yes';
+    })();
 
-  return base;
+    if (!isYes) base.push('RFCResponseLetterNo');
+    console.log("🏞️ base ", base);
+    // 3. 🔹 לוגיקה חדשה לפי sentProtocol
+    const rawSent = pmoDraft?.sentProtocol;
+    const sentStr = String(rawSent ?? '').trim();
+
+    // אם זה עמודת בחירה/טקסט עם "כן"
+    const isSentYes =
+      rawSent === true ||          // אם זה Yes/No (boolean)
+      sentStr === 'כן' ||          // אם זה טקסט בעברית
+      sentStr.toLowerCase() === 'yes'; // אם יבוא לך באנגלית בעתיד
+   // אם זה *לא* "כן" → מסתירים Addendum ו-IntegrationTeamDecisionImplement
+   
+    if (!isSentYes) {
+      if (base.indexOf('Addendum') === -1) base.push('Addendum');
+      console.log("PRTCOL WAS NOT SENT🏕️🏕️🏞️🏕️🏞️");
+
+      //if (base.indexOf(TARGET_FIELD) === -1) base.push(TARGET_FIELD);
+    }else{
+      for (let i = base.length - 1; i >= 0; i--) {
+        if (base[i] === 'Addendum') base.splice(i, 1);
+      }
+      console.log("PRTCOL WAS SENT🏕️🏕️🏞️🏕️🏞️");
+    }
+
+
+
+    const tenderPhaseRaw = pmoDraft?.TenderPhase;
+    const tenderPhaseStr = String(tenderPhaseRaw ?? '').toLowerCase();
+
+    // מספיק שאו שזה בדיוק "1" או שמופיע בו "phase 1"
+    const isPhase1 = tenderPhaseStr === 'phase 1 - bidders’ requests for clarifications (rfcs) of tender documents' || tenderPhaseStr.indexOf('phase 1') != -1;
+
+    if (isPhase1 && !base.includes('StatusOfRFCresponseOrTcRFC')) {
+      base.push('StatusOfRFCresponseOrTcRFC');
+    }
+
+
+
+    return base;
 }, [pmoDraft, pmoDraft?.RevisionIncludesChangeInTenderDo, pmoDraft?.sentProtocol, viewFieldOrder]);
 
 
 // ✅ אילו שדות של Tender Team *כן* יוצגו (TENDER_TEAM_FIELDS פחות מה שמוסתר דינאמית)
 const tenderTeamVisibleFields: string[] = React.useMemo(() => {
   const dynHidden = dynamicHideFieldstenders || [];
+  console.log("dynamicHideFieldstenders ", dynamicHideFieldstenders);
+  console.log("TENDER_TEAM_FIELDS.filter(f => !dynHidden.includes(f)) ", TENDER_TEAM_FIELDS.filter(f => !dynHidden.includes(f)))
   return TENDER_TEAM_FIELDS.filter(f => !dynHidden.includes(f));
 }, [dynamicHideFieldstenders]);
 
@@ -2014,7 +2032,7 @@ const dynamicHideFields = React.useMemo<string[]>(() => {
   const isYes = (() => {
     if (typeof rv === 'boolean') return rv;
     const s = String(rv ?? '').trim().toLowerCase();
-    return s === 'y' || s === 'yes' || s === 'true' || s === '1';
+    return  s === 'yes';
   })();
 
   if (!isYes) base.push('RFCResponseLetterNo');
@@ -2031,8 +2049,15 @@ const dynamicHideFields = React.useMemo<string[]>(() => {
 
   // אם זה *לא* "כן" → מסתירים Addendum ו-IntegrationTeamDecisionImplement
   if (!isSentYes) {
+    console.log("protole wasn't sent yet ");
     if (base.indexOf('Addendum') === -1) base.push('Addendum');
     if (base.indexOf(TARGET_FIELD) === -1) base.push(TARGET_FIELD);
+  }else{
+    console.log("protole was sent ");
+    for (let i = base.length - 1; i >= 0; i--) {
+      if (base[i] === 'Addendum') base.splice(i, 1);
+    }
+    console.log("base ", base);
   }
 
   return base;
@@ -2054,18 +2079,20 @@ const dynamicHideFields = React.useMemo<string[]>(() => {
 
       // אם זה אחד השדות הרלוונטיים, והוא לא "כן" → להסתיר
       if ((internal === 'Addendum' || internal === TARGET_FIELD) && !isSentYes) {
+        console.log("🏕️🏕️🏞️🏕️🏞️");
         return false;
       }
 
     const decision = String(pmoDraft?.DecisionRegardingProposedChange || '').trim();
     const revInc = String(pmoDraft?.RevisionIncludesChangeInTenderDo || '').trim().toLowerCase();
+    console.log("🏕️ revInc ", revInc);
     const tenderPhaseStr = String(integrationItem?.TenderPhase || '').trim().toLowerCase();
         // האם RevisionIncludesChangeInTenderDo הוא "כן"/True
     const revIsTrue = (() => {
       const rv = pmoDraft?.RevisionIncludesChangeInTenderDo;
       if (typeof rv === 'boolean') return rv;
       const s = String(rv ?? '').trim().toLowerCase();
-      return s === 'true' || s === 'y' || s === 'yes' || s === '1';
+      return  s === 'yes';
     })();
 
 
@@ -2075,7 +2102,8 @@ const dynamicHideFields = React.useMemo<string[]>(() => {
     }
 
     if (internal === 'Addendum' || internal === 'TenderCommitteeApprovalDate') {
-      const isNo = (revInc === 'n' || revInc === 'no' || revInc === 'false' || revInc === '0');
+      console.log("🤩 1 internal ", internal);
+      const isNo = (revInc.toLowerCase() != 'yes');
       if (isNo) {
         console.log("🐴🐴🐴🐴🐴 internal === 'TenderCommitteeApprovalDate' and isNo false");
         return false;
@@ -2114,9 +2142,9 @@ const dynamicHideFields = React.useMemo<string[]>(() => {
 
   const isFieldInTender = (internal: string): boolean => {
     if (TENDER_TEAM_FIELDS.indexOf(internal) > -1) {
-      return false;
+      return true
     }
-    return true;
+    return false;
   };
 
 
@@ -2156,82 +2184,85 @@ const dynamicHideFields = React.useMemo<string[]>(() => {
 
   const renderPmoEditableBySteps = () => {
       // 🐛 DEBUG – print all PMO fields & visibilityte
-  if (pmoDraft) {
-    const allFields = Object.keys(pmoDraft || {});
+    if (pmoDraft) {
+      const allFields = Object.keys(pmoDraft || {});
 
-    console.log('PMO all fields (internal names):', allFields);
-    console.log('PMO viewFieldOrder:', viewFieldOrder);
-    console.log('PMO dynamicHideFields:', dynamicHideFields);
+      console.log('PMO all fields (internal names):', allFields);
+      console.log('PMO viewFieldOrder:', viewFieldOrder);
+      console.log('PMO dynamicHideFields:', dynamicHideFields);
 
-    const temp = allFields.filter(f => isFieldVisibleNow(f));
-    console.log("🦁temp ", temp);
-    const visibleNow = temp.filter(f=> isFieldInTender(f));
-    console.log("🔮 visibleNow ",visibleNow );
-    console.log('PMO fields that isFieldVisibleNow() == true:', visibleNow);
+      const temp = allFields.filter(f => isFieldVisibleNow(f));
+      console.log("🦁temp ", temp);
+      const visibleNow = temp.filter(f=>!isFieldInTender(f));
+      console.log("🔮 visibleNow ",visibleNow );
+      console.log('PMO fields that isFieldVisibleNow() == true:', visibleNow);
 
-    
-  }
-
-  // 🔹 נחלץ את המפתח של ה־Phase מתוך TenderPhase
-  const phaseKey = getPhaseViewKeyFromTenderPhase(integrationItem?.TenderPhase);
-
-  const allSteps = Object.keys(stepsInternal);
-
-  // 🔹 אם יש Phase מזוהה – נסנן רק את ה־steps שהשם שלהם מתחיל בו
-  const stepNames = phaseKey
-    ? allSteps.filter(s => s.toLowerCase().indexOf(phaseKey)===0)
-    : allSteps;
-
-  // אם אין בכלל steps – מציגים טופס מלא בלי Pivot
-  if (!stepNames.length) {
-    const order = viewFieldOrder && viewFieldOrder.length
-        ? viewFieldOrder
-        : Object.keys(pmoDraft || {});
-    return (
-      <EditableFields
-        item={pmoDraft}
-        onChange={onChangeField}
-        fieldOrder={order}//stepsInternal[step] || []}
-        hideFields={dynamicHideFields}
-        internalToTitle={pmoLabels}
-        fieldInfoMap={pmoFieldInfoMap}
-        canEdit={canEditField}
-        placeholderMap={placeholders}
-        choiceOverrides={{
-          [TARGET_FIELD]: itdiOptions
-        }}
-        tenderPhase={String(integrationItem?.TenderPhase || '')}
-        requiredMap={requiredMap}
-        errorMap={validationErrors}
-        labelOverrides={PMO_LABEL_OVERRIDES}
-      />
-    );
-  }
-  const getStepFieldOrder = (step: string): string[] => {
-  const stepFields = stepsInternal[step] || [];
-
-  // אם יש View – נכבד אותו קודם, ואז נסנן לפי ה-step
-  let order: string[];
-  if (viewFieldOrder && viewFieldOrder.length) {
-    if (stepFields.length) {
-      order = viewFieldOrder.filter(f => stepFields.indexOf(f) !== -1);
-    } else {
-      order = viewFieldOrder;
+      
     }
-  } else {
-    // בלי View – נשאר רק עם ה-step המקורי
-    order = stepFields;
-  }
 
-  return order;//mapped;
-};
+    // 🔹 נחלץ את המפתח של ה־Phase מתוך TenderPhase
+    const phaseKey = getPhaseViewKeyFromTenderPhase(integrationItem?.TenderPhase);
+
+    const allSteps = Object.keys(stepsInternal);
+
+    // 🔹 אם יש Phase מזוהה – נסנן רק את ה־steps שהשם שלהם מתחיל בו
+    const stepNames = phaseKey
+      ? allSteps.filter(s => s.toLowerCase().indexOf(phaseKey)===0)
+      : allSteps;
+    
+    // אם אין בכלל steps – מציגים טופס מלא בלי Pivot
+    if (!stepNames.length) {
+      const rawOrder  = viewFieldOrder && viewFieldOrder.length
+          ? viewFieldOrder
+          : Object.keys(pmoDraft || {});
+
+      const order = rawOrder.filter((k) => k !== "Addendum");
+      console.log("🧤1");
+      return (
+        <EditableFields
+          item={pmoDraft}
+          onChange={onChangeField}
+          fieldOrder={order}//stepsInternal[step] || []}
+          hideFields={dynamicHideFields}
+          internalToTitle={pmoLabels}
+          fieldInfoMap={pmoFieldInfoMap}
+          canEdit={canEditField}
+          placeholderMap={placeholders}
+          choiceOverrides={{
+            [TARGET_FIELD]: itdiOptions
+          }}
+          tenderPhase={String(integrationItem?.TenderPhase || '')}
+          requiredMap={requiredMap}
+          errorMap={validationErrors}
+          labelOverrides={PMO_LABEL_OVERRIDES}
+        />
+      );
+    }
+    const getStepFieldOrder = (step: string): string[] => {
+    const stepFields = stepsInternal[step] || [];
+
+    // אם יש View – נכבד אותו קודם, ואז נסנן לפי ה-step
+    let order: string[];
+    if (viewFieldOrder && viewFieldOrder.length) {
+      if (stepFields.length) {
+        order = viewFieldOrder.filter(f => stepFields.indexOf(f) !== -1);
+      } else {
+        order = viewFieldOrder;
+      }
+    } else {
+      // בלי View – נשאר רק עם ה-step המקורי
+      order = stepFields;
+    }
+
+    return order;//mapped;
+  };
 
 
   // לוודא שה־selectedKey תמיד שייך ל־stepNames
   const effectiveActiveStep = stepNames.indexOf(activeStep)!= -1
     ? activeStep
     : (stepNames[0] || '');
-
+  console.log("🧤2");
   return (
     <Pivot
       selectedKey={effectiveActiveStep}
@@ -2272,9 +2303,13 @@ const dynamicHideFields = React.useMemo<string[]>(() => {
     </Pivot>
   );
 };
-
-
-console.log("🔎 integrationSearch ", integrationSearch, " integrationId ", integrationId);
+//integrationChoices
+//fieldPermMap, pmoDraft, pmoItem, integrationItem
+console.log("🍋‍🟩 RFCResponseLetterNo",TENDER_TEAM_FIELDS.indexOf('RFCResponseLetterNo') > -1 && tenderTeamHideFields.indexOf('RFCResponseLetterNo') <= -1 );
+console.log("🍋 Addendum", TENDER_TEAM_FIELDS.indexOf('Addendum') > -1 && tenderTeamHideFields.indexOf('Addendum') <= -1 );
+console.log("🍓 TenderCommitteeApprovalDate",TENDER_TEAM_FIELDS.indexOf('TenderCommitteeApprovalDate') > -1 && tenderTeamHideFields.indexOf('TenderCommitteeApprovalDate') <= -1 );
+console.log("🍇 StatusOfRFCresponseOrTcRFC",TENDER_TEAM_FIELDS.indexOf('StatusOfRFCresponseOrTcRFC') > -1 && tenderTeamHideFields.indexOf('StatusOfRFCresponseOrTcRFC') <= -1 );
+console.log("🍓🍋🍇🍋‍🟩tenderTeamHideFields", tenderTeamHideFields);
 
   return (
     <div
@@ -2303,24 +2338,10 @@ console.log("🔎 integrationSearch ", integrationSearch, " integrationId ", int
           tokens={{ childrenGap: 12 }}
         >
           <Stack tokens={{ childrenGap: 4 }}>
-            <span
-              style={{
-                fontSize: 13,
-                color: '#6b7280',
-                background: ACCENT_SOFT,
-                padding: '4px 12px',
-                borderRadius: 999,
-                alignSelf: 'flex-start'
-              }}
-            >
-              PMO • Smart Decision Form
-            </span>
+            
             <h1 style={{ margin: 0, fontSize: 28, color: '#0f172a' }}>
-              Application Form to Integration Team – LM's proposed changes /  deviations from precedent 
+              Decision Form
             </h1>
-            <p style={{ margin: 0, fontSize: 14, color: '#6b7280', maxWidth: 620 }}>
-              Select an item on the left, and get a role-specific PMO form on the right, with highlighted required fields and a clear workflow.
-            </p>
           </Stack>
 
           {}
@@ -2354,16 +2375,14 @@ console.log("🔎 integrationSearch ", integrationSearch, " integrationId ", int
                   color: '#64748b'
                 }}
               >
-                _
+                 
               </span>
               <div style={{ fontSize: 18, fontWeight: 600, color: '#0f172a' }}>
-                Tender item selection
+                Tender item selection 
               </div>
 
               {}
-              <div>
-                My OLM: {myRoles.join(", ") || "—"}
-              </div>
+              
               <Dropdown
                 label="Filter by Originating Line Manager"
                 selectedKey={olmFilter}
@@ -2501,7 +2520,7 @@ console.log("🔎 integrationSearch ", integrationSearch, " integrationId ", int
               <PrimaryButton
                 text={busy ? 'Saving…' : 'Save Integration Decision'}
                 disabled={busy || !pmoItem}
-                onClick={() => onSave({ updateEditingDate: false})}//true })}
+                onClick={() => onSave({ updateEditingDate: true })}
                 styles={{
                   root: {
                     borderRadius: 999,
@@ -2549,7 +2568,7 @@ console.log("🔎 integrationSearch ", integrationSearch, " integrationId ", int
             fieldInfoMap={pmoFieldInfoMap}
             fieldOrder={TENDER_TEAM_FIELDS}
             hideFields={tenderTeamHideFields}
-            labelOverrides={PMO_LABEL_OVERRIDES}  
+            labelOverrides={pmoLabels}//{PMO_LABEL_OVERRIDES}  
             canEdit={canEditField}
             tenderPhase={String(integrationItem?.TenderPhase || '')}
             choiceOverrides={{
@@ -2613,6 +2632,8 @@ console.log("🔎 integrationSearch ", integrationSearch, " integrationId ", int
       </Stack>
     </div>
   );
+
+  
 
 
 };

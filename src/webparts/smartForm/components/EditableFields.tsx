@@ -174,13 +174,18 @@ const EditableFields: React.FC<Props> = ({
   labelOverrides = {},
 }) => {
   const extraHide = ['Integration', 'IntegrationId', 'Id', 'ID', 'Title'];
+  console.log("🥫 fieldOrder ", fieldOrder, "\n🍼 hideFields", hideFields);
 
   const keys = React.useMemo(() => {
+    console.log("🎋Object.keys(item)", Object.keys(item));
     const all = Object.keys(item || {}).filter(k =>
       hideFields.indexOf(k) === -1 &&
       extraHide.indexOf(k) === -1 &&
-      !isSystemField(k)
+      !isSystemField(k)&&
+      fieldOrder.indexOf(k) > -1 
     );
+
+    console.log("all- 1 🔑 ", all);
 
     const ordered: string[] = [];
     const seen: Record<string, boolean> = {};
@@ -188,10 +193,14 @@ const EditableFields: React.FC<Props> = ({
       const f = fieldOrder[i];
       if (all.indexOf(f) > -1 && !seen[f]) { ordered.push(f); seen[f] = true; }
     }
+
     for (let i = 0; i < all.length; i++) {
       const f = all[i];
       if (!seen[f]) { ordered.push(f); seen[f] = true; }
     }
+    console.log("all 🔑 ", all);
+    console.log("ordered 🔑 ", ordered);
+
     return ordered;
   }, [item, fieldOrder, hideFields]);
 
@@ -211,10 +220,13 @@ const EditableFields: React.FC<Props> = ({
         console.log("🍩🧋 tenderPhaseStr ", tenderPhaseStr);
         const val = item[internal];
         const info = fieldInfoMap[internal];
+
+
         console.log("🫏 const label = (labelOverrides && labelOverrides[internal]) || internalToTitle[internal] ||internal; ",
           "label  ", (labelOverrides && labelOverrides[internal]) || internalToTitle[internal] ||internal, "labelOverrides  ", labelOverrides,"  labelOverrides[internal] ",
           labelOverrides[internal],"internalToTitle[internal]",  internalToTitle[internal], "  internal   " ,internal);
-        const label = (labelOverrides && labelOverrides[internal]) ;
+        const label = (labelOverrides && labelOverrides[internal])||(internalToTitle?.[internal]) ;
+
         //|| internalToTitle[internal] || internal;
         const hint = helpTextFor(info);
         const editable = canEdit ? !!canEdit(internal) : true;
@@ -222,6 +234,27 @@ const EditableFields: React.FC<Props> = ({
         const error = errorMap[internal];
 
         console.log('🤗tenderPhaseLc ', tenderPhaseStr);
+        let placeholder = placeholderMap?.[internal];
+        
+        if(internal === 'RFCorTcRFCasPublishedByNTaToBeFi'){
+          const decision = String(item?.DecisionRegardingProposedChange || '').trim();
+          console.log('🍩decision ', decision);
+
+          if (tenderPhaseStr.indexOf('phase 1') > -1) {
+            return null;
+          }
+          if(decision === 'Accept'){
+            placeholder = 'Enter final version for publication here';
+          }
+          
+        }
+
+        if(internal === 'Assignedto' || internal === 'SubCategory'){
+          if(tenderPhaseStr.indexOf('phase 1') === -1){
+            return null;
+          }
+        }
+
 
         if (internal === 'dog') {
             return null;
@@ -259,15 +292,20 @@ const EditableFields: React.FC<Props> = ({
         if (internal === 'Addendum') {
           const decision = String(item?.RevisionIncludesChangeInTenderDo || '').trim().toLowerCase();
           console.log('🍩🤪decision ', decision, '\n 🫷🏻item?.RevisionIncludesChangeInTenderDo', item?.RevisionIncludesChangeInTenderDo);
-          if (decision != 'true') {
+          if ((tenderPhaseStr.indexOf('phase 2') > -1 && decision != 'yes') || tenderPhaseStr.indexOf('phase 1') > -1) {
+            console.log("1", tenderPhaseStr.indexOf('phase 2') > -1 );
+            console.log("2", decision != 'yes')
+            console.log("3", tenderPhaseStr.indexOf('phase 1') > -1);
+            console.log("🧻 null is returned");
             return null;
           }
         }
 
         if (internal === 'TenderCommitteeApprovalDate') {
+          console.log("🤩 2");
           const decision = String(item?.RevisionIncludesChangeInTenderDo || '').trim();
           console.log('🍩🎈decision ', decision);
-          if (decision != 'true') {
+          if (decision != 'Yes') {
             console.log("🐴🐴🐴 decision != 'true' editefileds");
             return null;
           }
@@ -289,6 +327,7 @@ const EditableFields: React.FC<Props> = ({
         }
 
         if(internal === "StatusOfRFCresponseOrTcRFC" || internal === "TenderCommitteeApprovalDate" || internal === "Addendum"){
+          console.log("🤩 2");
           if (tenderPhaseStr == 'phase 1 - bidders’ requests for clarifications (rfcs) of tender documents' || tenderPhaseStr.indexOf('phase 1') != -1) {
             console.log(
               "🍩🧋 PASE 1 StatusOfRFCresponseOrTcRFC, TenderCommitteeApprovalDate, Addendum "     
@@ -575,7 +614,7 @@ const EditableFields: React.FC<Props> = ({
         // Rich Text → טקסט רגיל/עריך
         if (isRichText(info)) {
           if (!editable) {
-                 
+            
             return (
               <div
                 key={internal}
@@ -593,6 +632,8 @@ const EditableFields: React.FC<Props> = ({
               </div>
             );
           }
+          const plain = htmlToPlainText(val);
+
           return (
             <TextField
               key={internal}
@@ -601,11 +642,17 @@ const EditableFields: React.FC<Props> = ({
               multiline
               autoAdjustHeight
               value={htmlToPlainText(val)}
-              placeholder={
+               placeholder={
+                placeholder
+                  ? placeholder
+                  : (plain.trim() === '' ? (placeholderMap?.[internal] ?? undefined) : undefined)
+              }
+              /*
+              placeholder=
                 (!val || String(htmlToPlainText(val)).trim() === '')
                   ? (placeholderMap?.[internal] || undefined)
                   : undefined
-              }
+              }*/
               required={required}
               errorMessage={error}
               onChange={(_, t) => onChange(internal, t ?? '')}
@@ -614,7 +661,7 @@ const EditableFields: React.FC<Props> = ({
           );
         }
        
-                // Taxonomy (Placeholder)
+        // Taxonomy (Placeholder)
         if (isTaxonomy(info)) {
           return (
             <TextField
