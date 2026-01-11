@@ -97,6 +97,7 @@ export async function updateAutoCreatedPmoDecisionItem(params: {
     pmoLinkFieldInternalName  = "Integration",
     pmoListID = "e5e8eaea-16db-49d3-ad7c-62f5a2bdd97a",
   } = params;
+  console.log("in updateAutoCreatedPmoDecisionItem");
 
   const pmoList = sp.web.lists.getById(pmoListID);
 
@@ -127,6 +128,9 @@ export async function updateAutoCreatedPmoDecisionItem(params: {
       const updatePayload = buildPmoUpdatePayloadFromItem(pmoItem);
       console.log("🎆 updatePayload ", updatePayload);
       await pmoList.items.getById(pmoListID).update(updatePayload);
+      console.log("🎆 pmoDecisionId ", pmoDecisionId)
+      await pmoList.items.getById(pmoDecisionId).update(updatePayload);
+
       console.log("🎆");
       return { ok: true, pmoDecisionId };
     }
@@ -222,13 +226,15 @@ export async function splitTenderAndCreateIntegrationItems(params: {
   } = params;
 
   const raw = String(pmoItem?.[tenderSourceInternalName] ?? "").trim();
+  console.log("🩰 raw ", raw);
+  if(raw === 'Not relevant to additional tenders')return;
+
   const parts = raw
     .split(",")
     .map(s => s.trim())
     .filter(Boolean);
 
   if (parts.length === 0) return;
-
   const list = sp.web.lists.getById(integrationListId);
 
   for (const tender of parts) {
@@ -245,17 +251,6 @@ export async function splitTenderAndCreateIntegrationItems(params: {
     const fixed = normalizePayloadForSpAdd(payload);
     console.log("✅ fixed payload", fixed);
     await list.items.add(fixed);
-    /*const integrationId = addRes?.data?.Id ?? addRes?.Id; 
-    
-    await updateAutoCreatedPmoDecisionItem({
-      sp,
-      integrationId,
-      pmoItem,
-      // כאן תכתבי את השם הפנימי של שדה הקישור ב-PMO decisions:
-      pmoLinkFieldInternalName: "IntegrationItemId", // ← לדוגמה, תחליפי לשם האמיתי אצלכם
-    });*/
-
-
   }
 }
 
@@ -669,6 +664,9 @@ const FormApp: React.FC<FormAppProps> = ({
     return {};
   }, [pmoDraft?.DecisionRegardingProposedChange]);
 
+  const [isSplitting, setIsSplitting] = React.useState(false);
+
+
   const [pmoLabels, setPmoLabels] = useState<Record<string, string>>({});
   const [pmoFieldInfoMap, setPmoFieldInfoMap] = useState<Record<string, any>>({});
 
@@ -829,6 +827,8 @@ async function syncPmoToIntegration(
       const val = pmoDraft ? pmoDraft[pmoField] : undefined;
 
       if (typeof val === 'undefined') continue;
+      if (val === null) continue;
+
 
       let outVal = val;
 
@@ -1046,13 +1046,7 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
       console.log("🫏🐴🐎 2");
       console.log("currentViewName ", currentViewName, " | ", viewName);
       console.log("🫏🐴🐎 2.5");
-      /* לוקחים את ה-View מהרשימה של ה-PMO
-      const viewFieldsResp: any = await sp.web.lists
-        .getById(PMO_LIST_ID) 
-        .views.getByTitle(viewName)
-        .select('ViewFields')();
-      */// זה האובייקט שרשמת ב-log
-
+      
       // בקובץ data.ts או קובץ shared אחר
       
       const fields = await sp.web.lists
@@ -1143,6 +1137,13 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
     await loadIntegrationViewFieldOrderForPhase(tenderPhaseRaw);
 
     // PMO לפי lookup ל-Integration
+    console.log("loadFormForIntegration", {
+      integrationId,
+      typeofIntegrationId: typeof integrationId,
+      pmoIntegrationLookupName,
+    });
+
+
     const { item: pmoFound, isNew } = await fetchOrCreatePmoByIntegration(
       sp, pmoListTitle, integrationId, pmoIntegrationLookupName
     );
@@ -1283,11 +1284,11 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
         console.log("🥯3");
       } catch (e: any) {
        console.log("🥯4");
-        setMsg({ type: MessageBarType.error, text: '🥯Error loading the form: ' + (e?.message || e) });
+        setMsg({ type: MessageBarType.error, text: 'Error loading the form: ' + (e?.message || e) });
          const msgText = String(e?.message || e || '');
         setMsg({
           type: MessageBarType.error,
-          text: '🛼Error loading initial data: ' + msgText
+          text: 'Error loading initial data: ' + msgText
         });
         console.log("1");
 
@@ -1405,11 +1406,13 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
 
   // --- כאן האוטומציה החדשה ---
   setPmoDraft((prev: any) => {
+    console.log("StatusOfRFCresponseOrTcRFC 🚌🚐🚎🚑🚒🚚🚛🚜🚘🚔🚖🚍🛻🚙🛺🚕🚓🚗");
     const next = { ...(prev || {}), [internal]: value };
     const nowIso = new Date().toISOString();
 
     // 1) ActualDate מתעדכן כש-StatusOfRFCresponseOrTcRFC משתנה
     if (internal === 'StatusOfRFCresponseOrTcRFC') {
+      console.log("🚌🚐🚎🚑🚒🚚🚛🚜🚘🚔🚖🚍🛻🚙🛺🚕🚓🚗");
       const prevVal = String(prev?.StatusOfRFCresponseOrTcRFC ?? '');
       const newVal  = String(value ?? '');
       if (prevVal !== newVal) {
@@ -1429,7 +1432,14 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
     return next;
   });
 
-    setPmoDraft((prev: any) => ({ ...prev, [internal]: value }));
+  /*
+  setPmoDraft((prev: any) => (
+   
+    { ...prev, [internal]: value }
+  )
+  );
+*/
+  
 
       
     // אם השדה הפך ללא ריק – ננקה שגיאת "שדה חובה"
@@ -1598,8 +1608,7 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
 
         
         console.log('🧾 draftToSave before save:', draftToSave);
-        console.log("🧪 before save RFCorTcRFCasPublishedByNTaToBeFi =", draftToSave.RFCorTcRFCasPublishedByNTaToBeFi);
-        console.log("🧪 in pmoDraft RFCorTcRFCasPublishedByNTaToBeFi =", pmoDraft?.RFCorTcRFCasPublishedByNTaToBeFi);
+       
 
         const saved = await savePmoItem(sp, PMO_LIST_ID, pmoItem.Id, draftToSave);
        
@@ -1610,17 +1619,14 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
         setValidationErrors({});
 
       // ---- אם אין שגיאות חובה, ממשיכים לשמור ----
-      
+      console.log("🦘3");
 
         // 🆕 אחרי שה-PMO נשמר בהצלחה – נסנכרן גם ל-INTEGRATION
         try {
-          if (integrationId) {
-            //await syncPmoToIntegration(sp, integrationId, pmoDraft);
-            console.log("⭐Sub_x002d_Category typeof:", typeof draftToSave.Sub_x002d_Category, draftToSave.Sub_x002d_Category);
-            console.log("⭐SubCategory typeof:", typeof draftToSave.SubCategory, draftToSave.SubCategory);
-            console.log("⭐Assignedto typeof:", typeof draftToSave.Assignedto, draftToSave.Assignedto);
 
-            await syncPmoToIntegration(sp, integrationId, draftToSave);
+          if ( draftToSave.IntegrationId) {//integrationId ||
+            //await syncPmoToIntegration(sp, integrationId, draftToSave);
+            await syncPmoToIntegration(sp,  draftToSave.IntegrationId, draftToSave);
             console.log('✅ Synced PMO → INTEGRATION for item', integrationId);
           } else {
             console.warn('syncPmoToIntegration: integrationId is null – no sync done');
@@ -1629,8 +1635,9 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
           console.error('❌ Failed to sync PMO → INTEGRATION', syncErr);
           // לא מפילים למשתמש את השמירה – זה רק סנכרון עזר
         }
-
+        /*
         if(options?.updateEditingDate){
+            console.log("🩰 options?.updateEditingDate", options?.updateEditingDate);
             await splitTenderAndCreateIntegrationItems({
               sp,
               integrationListId: '2c962132-409d-4bf2-9440-3b3b6c7975a0',
@@ -1641,7 +1648,7 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
               linkFieldInternalName: "NTA_x2019_s_x0020_reference", // אם קיים אצלכם
               linkValue: draftToSave?.IntegrationId, // או saved?.Id — לפי מה שהשדה מצפה
             });  
-        }
+        }*/
 
      
 
@@ -1657,7 +1664,30 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
 
   };
 
- 
+  const onSplitTenderClick = async () => {
+  try {
+    setIsSplitting(true);
+
+    await splitTenderAndCreateIntegrationItems({
+      sp,
+      integrationListId: "2c962132-409d-4bf2-9440-3b3b6c7975a0",
+      pmoItem: pmoDraft, // או pmoDraft אצלך (העיקר שזה הדראפט הנקי שאת שומרת)
+      itegrationItem: integrationItem,
+      tenderSourceInternalName: "DecisionAppliesToOtherWorksTende",
+      pmoToIntegrationMap: PMO_TO_INTEGRATION_FIELD_MAP,
+      linkFieldInternalName: "NTA_x2019_s_x0020_reference",
+      linkValue: pmoDraft?.IntegrationId,
+    });
+
+    setMsg?.({ type: MessageBarType.success, text: "Split tender completed." });
+  } catch (e: any) {
+    console.error("splitTenderAndCreateIntegrationItems failed", e);
+    setMsg?.({ type: MessageBarType.error, text: e?.message || "Split tender failed." });
+  } finally {
+    setIsSplitting(false);
+  }
+};
+
 
   function formatDateDDMMYYYY(value: any): string {
   if (!value) return '';
@@ -2517,18 +2547,26 @@ console.log("🍓🍋🍇🍋‍🟩tenderTeamHideFields", tenderTeamHideFields)
 
             {renderPmoEditableBySteps()}
             <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
-              <PrimaryButton
-                text={busy ? 'Saving…' : 'Save Integration Decision'}
-                disabled={busy || !pmoItem}
-                onClick={() => onSave({ updateEditingDate: true })}
-                styles={{
-                  root: {
-                    borderRadius: 999,
-                    paddingInline: 24,
-                    fontWeight: 600,
-                  },
-                }}
-              />
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <PrimaryButton
+                  text={busy ? 'Saving…' : 'Save Integration Decision'}
+                  disabled={busy || !pmoItem}
+                  onClick={() => onSave({ updateEditingDate: true })}
+                  styles={{
+                    root: {
+                      borderRadius: 999,
+                      paddingInline: 24,
+                      fontWeight: 600,
+                    },
+                  }}
+                />
+                <DefaultButton
+                  text={isSplitting ? "Splitting..." : "Split tender"}
+                  onClick={onSplitTenderClick}
+                  disabled={isSplitting || !integrationItem}
+                />
+              </div>
+
             </div>
 
           </Stack>
@@ -2559,11 +2597,34 @@ console.log("🍓🍋🍇🍋‍🟩tenderTeamHideFields", tenderTeamHideFields)
 
           <EditableFields
             item={pmoDraft || pmoItem || {}}
-            onChange={(internalName: string, value: any) => {
+            /*onChange={(internalName: string, value: any) => {
               setPmoDraft((prev: any) => ({
                 ...(prev || pmoItem || {}),
                 [internalName]: value,
               }));
+            }}*/
+              onChange={(internalName: string, value: any) => {
+                setPmoDraft((prev: any) => {
+                console.log("INSIDE setPmoDraft updater"); // בדיקה 2
+
+                const base = prev || pmoItem || {};
+                const next = { ...base, [internalName]: value };
+                const nowIso = new Date().toISOString();
+
+                if (internalName === "StatusOfRFCresponseOrTcRFC") {
+                  const prevVal = String(base?.StatusOfRFCresponseOrTcRFC ?? "");
+                  const newVal  = String(value ?? "");
+                  if (prevVal !== newVal) next.ActualDate = nowIso;
+                }
+
+                if (internalName === "DecisionRegardingProposedChange") {
+                  const prevVal = String(base?.DecisionRegardingProposedChange ?? "");
+                  const newVal  = String(value ?? "");
+                  if (prevVal !== newVal) next.DecisionDate = nowIso;
+                }
+
+                return next;
+              });
             }}
             fieldInfoMap={pmoFieldInfoMap}
             fieldOrder={TENDER_TEAM_FIELDS}

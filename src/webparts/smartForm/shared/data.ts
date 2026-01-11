@@ -17,6 +17,7 @@ const lc = (s?: string) => String(s || '').toLowerCase();
 //const strHas = (a?: string, frag?: string) => lc(a).indexOf(lc(frag)) > -1;
 
 export const FIELD_PERMISSION_LIST_TITLE = 'fieldPermission';
+export const FIELD_PERMISSION_LIST_ID = '05b813e8-e560-476d-89a7-5eac957bdc38';
 export const FP_COL_INTERNAL = 'internalFieldName';   // Text
 export const FP_COL_WHO_CAN_EDIT = 'WhoCanEdite';     // Choice/MultiChoice (טקסטים בעברית לפי התיאור)
 
@@ -219,6 +220,8 @@ export async function savePmoItem(
     delete payload.AssignedtoId;            // אם זה People/Lookup – לפעמים נשמר כך
     delete payload['Sub_x002d_Category'];
     delete payload['Sub_x002d_CategoryId']; // אם זה Lookup
+    delete payload['SubCategory'];
+    delete payload['SubCategoryId'];
   }
   // 2. זורקים שדות מערכת שלא צריך לשלוח ל־SharePoint
   delete payload.ServerRedirectedEmbedUri;
@@ -248,10 +251,51 @@ export async function savePmoItem(
 
   console.log('🧾 payload sent to SharePoint:', payload);
   console.log('🐶 dog in payload:', payload.dog);
+  const MULTI_CHOICE_FIELDS = new Set([
+    "SubCategory",
+    "Sub_x002d_Category", // אם זה השם הפנימי אצלך
+  ]);
+
+  function toMultiChoiceValue(v: any) {
+    let arr: string[] = [];
+
+    if (v == null) {
+      arr = [];
+    } else if (Array.isArray(v)) {
+      arr = v;
+    } else if (typeof v === "object" && Array.isArray(v.results)) {
+      arr = v.results;
+    } else if (typeof v === "string") {
+      const s = v.trim();
+      if (!s) arr = [];
+      else {
+        const parts = s.includes(";#") ? s.split(";#") : s.split(/[;,|]/);
+        arr = parts.map(x => x.trim()).filter(Boolean);
+      }
+    } else {
+      arr = [String(v).trim()].filter(Boolean);
+    }
+
+    // ✅ MultiChoice לא מקבל null — רק results (גם אם ריק)
+    return {
+      "__metadata": { "type": "Collection(Edm.String)" },
+      "results": arr
+    };
+  }
+
 
   // GET ה־etag כדי SharePoint יאפשר עדכון
 for (const key in payload) {
   const val = payload[key];
+    // ✅ תיקון ספציפי ל-MultiChoice של SubCategory
+  if ((key === "SubCategory" || key === "Sub_x002d_Category") && (val == null || (Array.isArray(val) && val.length === 0) || (typeof val === "string" && !val.trim()))) {
+    delete payload[key]; // ✅ לא שולחים בכלל, כדי שלא ייכשל
+    continue;
+  }
+  if (MULTI_CHOICE_FIELDS.has(key)) {
+    payload[key] = toMultiChoiceValue(val);
+    continue;
+  }
   if (!payload.RFCResponseLetterNo && payload.RFCResponseLetterNo !== 0) {
     delete payload.RFCResponseLetterNo;
   }
@@ -296,15 +340,14 @@ for (const key in payload) {
 
 
 }
-//const webUrl = this.context.pageContext.web.absoluteUrl;
+
 console.log("savePmoItem 🌭🌭");
 console.log("SAVE PAYLOAD", JSON.stringify(payload, null, 2));
-payload.__metadata = {
+try{
+  payload.__metadata = {
   type: "SP.Data.PMO_x0020_decisionsListItem"
 };
-
-console.log("⭐Sub_x002d_Category typeof:", typeof payload.Sub_x002d_Category, payload.Sub_x002d_Category);
-console.log("⭐Assignedto typeof:", typeof payload.Assignedto, payload.Assignedto);
+console.log("🦘 1");
 
 // ⭐ UPDATE ללא metadata — רק REST
   await spPost(
@@ -319,6 +362,15 @@ console.log("⭐Assignedto typeof:", typeof payload.Assignedto, payload.Assigned
       body: JSON.stringify(payload)
     }
   );
+  console.log("🦘 2");
+
+}catch(e){
+  console.log("savePMOITEM fall in the end with ", e);
+}
+
+
+
+
 
 
 console.log("savePmoItem 🌭🌭🌭");
@@ -355,10 +407,10 @@ export type FieldPermissionMap = Record<string, FieldPermissionEntry>;
 // טוען מפה: internalFieldName -> אובייקט הרשאות (ברירת מחדל + M1/M2/M3)
 export async function loadFieldPermissionMap(
   sp: SPFI,
-  fieldPermissionListTitle: string = FIELD_PERMISSION_LIST_TITLE
+  fieldPermissionListTitle: string = FIELD_PERMISSION_LIST_ID
 ): Promise<FieldPermissionMap> {
   console.log("😋1_ fieldPermissionListTitle ", fieldPermissionListTitle);
-  const list = sp.web.lists.getByTitle(fieldPermissionListTitle);
+  const list = sp.web.lists.getById(fieldPermissionListTitle);
   console.log("😋2_ FP_COL_INTERNAL ", FP_COL_INTERNAL, "FP_COL_WHO_CAN_EDIT ", FP_COL_WHO_CAN_EDIT);
 
   // שימי לב: מוסיפים גם את העמודות M1 / M2 / M3 ל-select
