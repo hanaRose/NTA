@@ -1,0 +1,1 @@
+{"version":3,"file":"PackageNameParsers.d.ts","sourceRoot":"","sources":["../../src/api/PackageNameParsers.ts"],"names":[],"mappings":"AAGA,OAAO,EAAE,iBAAiB,EAAE,MAAM,8BAA8B,CAAC;AAEjE,qBAAa,kBAAkB;IAC7B;;OAEG;IACH,OAAc,WAAW,EAAE,iBAAiB,CAA6B;IAEzE;;;OAGG;IACH,OAAc,cAAc,EAAE,iBAAiB,CAE5C;IAEH;;;OAGG;IACH,OAAc,UAAU,EAAE,iBAAiB,CAAqC;CACjF"}

@@ -1,0 +1,1 @@
+class i{}i.initializeCalled=!1,i.initializeCompleted=!1,i.additionalValidOrigins=[],i.initializePromise=void 0,i.isFramelessWindow=!1,i.frameContext=void 0,i.hostClientType=void 0,i.printCapabilityEnabled=!1;export{i as GlobalVars};

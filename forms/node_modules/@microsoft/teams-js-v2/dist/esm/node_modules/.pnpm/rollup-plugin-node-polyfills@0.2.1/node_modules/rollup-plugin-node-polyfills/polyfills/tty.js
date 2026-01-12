@@ -1,0 +1,1 @@
+function t(){return!1}function e(){throw new Error("tty.ReadStream is not implemented")}function r(){throw new Error("tty.ReadStream is not implemented")}var n={isatty:t,ReadStream:e,WriteStream:r};export{e as ReadStream,r as WriteStream,n as default,t as isatty};

@@ -1,0 +1,1 @@
+{"version":3,"file":"ISmartFormProps.d.ts","sourceRoot":"","sources":["../../../../src/webparts/smartForm/components/ISmartFormProps.ts"],"names":[],"mappings":"AAAA,MAAM,WAAW,eAAe;IAC9B,WAAW,EAAE,MAAM,CAAC;IACpB,WAAW,EAAE,OAAO,CAAC;IACrB,kBAAkB,EAAE,MAAM,CAAC;IAC3B,eAAe,EAAE,OAAO,CAAC;IACzB,eAAe,EAAE,MAAM,CAAC;CACzB"}
