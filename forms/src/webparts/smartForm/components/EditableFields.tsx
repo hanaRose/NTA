@@ -168,7 +168,7 @@ const EditableFields: React.FC<Props> = ({
   canEdit = () => false,
   placeholderMap = {},
   choiceOverrides = {},
-  tenderPhase,
+  tenderPhase ,
   requiredMap = {},
   errorMap = {},
   labelOverrides = {},

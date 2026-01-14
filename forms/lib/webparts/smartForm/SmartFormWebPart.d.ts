@@ -9,7 +9,6 @@ export interface ISmartFormWebPartProps {
     stepsConfigJson?: string;
 }
 export default class SmartFormWebPart extends BaseClientSideWebPart<ISmartFormWebPartProps> {
-    onInit(): Promise<void>;
     render(): void;
     protected onDispose(): void;
     protected get dataVersion(): Version;

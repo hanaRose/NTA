@@ -649,6 +649,10 @@ var FormApp = function (_a) {
     var _b;
     var context = _a.context, pmoListTitle = _a.pmoListTitle, _c = _a.pmoIntegrationLookupName, pmoIntegrationLookupName = _c === void 0 ? 'Integration' : _c, _d = _a.stepsConfig, stepsConfig = _d === void 0 ? stepsConfigJson : _d, _e = _a.isEditMode, isEditMode = _e === void 0 ? false : _e;
     var PMO_LIST_ID = "e5e8eaea-16db-49d3-ad7c-62f5a2bdd97a";
+    var STATUS_DECISION_REACHED = "Decision reached - To be included in Protocol";
+    // אם זה שם פנימי שונה אצלכם - תעדכני פה:
+    var INTEGRATION_TEAM_STATUS_FIELD = "INTEGRATIONTEAMSTATUS";
+    var PMO_SENT_PROTOCOL_FIELD = "sentProtocol";
     var sp = useMemo(function () { return getSP(context); }, [context]);
     var _f = useState(null), me = _f[0], setMe = _f[1];
     var _g = useState([]), integrationChoices = _g[0], setIntegrationChoices = _g[1];
@@ -1459,9 +1463,10 @@ var FormApp = function (_a) {
         }
     }
     var onSave = function (options) { return __awaiter(void 0, void 0, void 0, function () {
-        var newErrors, flage, i, internal, v, isEmpty, info, t, urlToCheck, draftToSave, internal, info, t, val, urlStr, saved, syncErr_1, e_5;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
+        var newErrors, flage, i, internal, v, isEmpty, info, t, urlToCheck, draftToSave, internal, info, t, val, urlStr, saved, syncErr_1, pmoList, integrationList, updatedPmoItem, e_5;
+        var _a, _b;
+        return __generator(this, function (_c) {
+            switch (_c.label) {
                 case 0:
                     console.log("🐴🐴🐴 in onsave ");
                     if (!pmoItem || !pmoItem.Id)
@@ -1537,9 +1542,9 @@ var FormApp = function (_a) {
                         });
                         return [2 /*return*/]; // לא ממשיכים לשמירה ב־SharePoint
                     }
-                    _a.label = 1;
+                    _c.label = 1;
                 case 1:
-                    _a.trys.push([1, 9, 10, 11]);
+                    _c.trys.push([1, 14, 15, 16]);
                     setBusy(true);
                     draftToSave = __assign({}, (pmoDraft || {}));
                     if (options === null || options === void 0 ? void 0 : options.updateEditingDate) {
@@ -1579,41 +1584,71 @@ var FormApp = function (_a) {
                     console.log('🧾 draftToSave before save:', draftToSave);
                     return [4 /*yield*/, savePmoItem(sp, PMO_LIST_ID, pmoItem.Id, draftToSave)];
                 case 2:
-                    saved = _a.sent();
+                    saved = _c.sent();
                     setPmoItem(saved);
                     setPmoDraft(saved);
                     setMsg({ type: MessageBarType.success, text: 'Saved successfully.' });
                     setValidationErrors({});
                     // ---- אם אין שגיאות חובה, ממשיכים לשמור ----
                     console.log("🦘3");
-                    _a.label = 3;
+                    _c.label = 3;
                 case 3:
-                    _a.trys.push([3, 7, , 8]);
+                    _c.trys.push([3, 7, , 8]);
                     if (!draftToSave.IntegrationId) return [3 /*break*/, 5];
                     //await syncPmoToIntegration(sp, integrationId, draftToSave);
                     return [4 /*yield*/, syncPmoToIntegration(sp, draftToSave.IntegrationId, draftToSave)];
                 case 4:
                     //await syncPmoToIntegration(sp, integrationId, draftToSave);
-                    _a.sent();
+                    _c.sent();
                     console.log('✅ Synced PMO → INTEGRATION for item', integrationId);
                     return [3 /*break*/, 6];
                 case 5:
                     console.warn('syncPmoToIntegration: integrationId is null – no sync done');
-                    _a.label = 6;
+                    _c.label = 6;
                 case 6: return [3 /*break*/, 8];
                 case 7:
-                    syncErr_1 = _a.sent();
+                    syncErr_1 = _c.sent();
                     console.error('❌ Failed to sync PMO → INTEGRATION', syncErr_1);
                     return [3 /*break*/, 8];
-                case 8: return [3 /*break*/, 11];
+                case 8:
+                    if (!((options === null || options === void 0 ? void 0 : options.updateEditingDate) === true)) return [3 /*break*/, 13];
+                    pmoList = sp.web.lists.getById(PMO_LIST_ID);
+                    return [4 /*yield*/, pmoList.items.getById(pmoItem.Id).update((_a = {},
+                            _a[INTEGRATION_TEAM_STATUS_FIELD] = STATUS_DECISION_REACHED,
+                            _a[PMO_SENT_PROTOCOL_FIELD] = true,
+                            _a))];
                 case 9:
-                    e_5 = _a.sent();
-                    setMsg({ type: MessageBarType.error, text: 'Save failed: ' + ((e_5 === null || e_5 === void 0 ? void 0 : e_5.message) || e_5) });
-                    return [3 /*break*/, 11];
+                    _c.sent();
+                    integrationList = sp.web.lists.getById(INTEGRATION_LIST_ID);
+                    if (!integrationId) return [3 /*break*/, 11];
+                    return [4 /*yield*/, integrationList.items.getById(integrationId).update((_b = {},
+                            _b[INTEGRATION_TEAM_STATUS_FIELD] = STATUS_DECISION_REACHED,
+                            _b))];
                 case 10:
+                    _c.sent();
+                    _c.label = 11;
+                case 11: return [4 /*yield*/, pmoList.items.getById(pmoItem.Id)()];
+                case 12:
+                    updatedPmoItem = _c.sent();
+                    setPmoItem(updatedPmoItem);
+                    setPmoDraft(updatedPmoItem);
+                    setValidationErrors({});
+                    // אופציה א: לשמור ל-state שמציג "כל הפריט"
+                    //setLastSavedItem(updatedPmoItem);
+                    // אופציה ב: אם את רוצה להציג אותו בתוך הטופס עצמו:
+                    // setPmoDecisionItem(updatedPmoItem);
+                    // אופציה ג: פשוט להדפיס לקונסול
+                    console.log("✅ Updated PMO Decision item:", updatedPmoItem);
+                    _c.label = 13;
+                case 13: return [3 /*break*/, 16];
+                case 14:
+                    e_5 = _c.sent();
+                    setMsg({ type: MessageBarType.error, text: 'Save failed: ' + ((e_5 === null || e_5 === void 0 ? void 0 : e_5.message) || e_5) });
+                    return [3 /*break*/, 16];
+                case 15:
                     setBusy(false);
                     return [7 /*endfinally*/];
-                case 11: return [2 /*return*/];
+                case 16: return [2 /*return*/];
             }
         });
     }); };

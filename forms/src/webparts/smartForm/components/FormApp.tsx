@@ -34,7 +34,6 @@ import EditableFields from './EditableFields';
 import '@pnp/sp/views';
 import '@pnp/sp/lists';
 
-
 // ===== עיצוב בסיסי (צבעים, כרטיסים וכו') =====
 const PAGE_BG = 'linear-gradient(135deg, #f4f6fb 0%, #e7f2ff 40%, #f9fafb 100%)';
 const CARD_BG = '#ffffff';
@@ -624,6 +623,11 @@ const FormApp: React.FC<FormAppProps> = ({
   isEditMode = false
 }) => {
   const PMO_LIST_ID = "e5e8eaea-16db-49d3-ad7c-62f5a2bdd97a"; 
+  const STATUS_DECISION_REACHED = "Decision reached - To be included in Protocol";
+
+// אם זה שם פנימי שונה אצלכם - תעדכני פה:
+  const INTEGRATION_TEAM_STATUS_FIELD = "INTEGRATIONTEAMSTATUS";
+  const PMO_SENT_PROTOCOL_FIELD = "sentProtocol";
   const sp: SPFI = useMemo(() => getSP(context), [context]);
 
 
@@ -1404,6 +1408,8 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
    
   }
 
+  
+
   // --- כאן האוטומציה החדשה ---
   setPmoDraft((prev: any) => {
     console.log("StatusOfRFCresponseOrTcRFC 🚌🚐🚎🚑🚒🚚🚛🚜🚘🚔🚖🚍🛻🚙🛺🚕🚓🚗");
@@ -1650,7 +1656,40 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
             });  
         }*/
 
-     
+        // ✅ בסוף onSave:
+        if (options?.updateEditingDate === true) {
+          // 1) Update PMO Decision: INTEGRATIONTEAMSTATUS + sentProtocol=true
+          const pmoList = sp.web.lists.getById(PMO_LIST_ID);
+
+          await pmoList.items.getById(pmoItem.Id).update({
+            [INTEGRATION_TEAM_STATUS_FIELD]: STATUS_DECISION_REACHED,
+            [PMO_SENT_PROTOCOL_FIELD]: true,
+          });
+
+          // 2) Update Integration list: INTEGRATIONTEAMSTATUS
+          const integrationList = sp.web.lists.getById(INTEGRATION_LIST_ID);
+          if(integrationId){
+            await integrationList.items.getById(integrationId).update({
+            [INTEGRATION_TEAM_STATUS_FIELD]: STATUS_DECISION_REACHED,
+          });
+          }
+          
+
+          // 3) Fetch updated PMO Decision item (FULL item) and show it
+          const updatedPmoItem = await pmoList.items.getById(pmoItem.Id)();
+          setPmoItem(updatedPmoItem);
+          setPmoDraft(updatedPmoItem);
+          setValidationErrors({});
+          // אופציה א: לשמור ל-state שמציג "כל הפריט"
+          //setLastSavedItem(updatedPmoItem);
+
+          // אופציה ב: אם את רוצה להציג אותו בתוך הטופס עצמו:
+          // setPmoDecisionItem(updatedPmoItem);
+
+          // אופציה ג: פשוט להדפיס לקונסול
+          console.log("✅ Updated PMO Decision item:", updatedPmoItem);
+        }
+
 
 
 
@@ -1660,9 +1699,8 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
         setBusy(false);
       }
 
-      
-
   };
+
 
   const onSplitTenderClick = async () => {
   try {
@@ -1686,7 +1724,7 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
   } finally {
     setIsSplitting(false);
   }
-};
+  };
 
 
   function formatDateDDMMYYYY(value: any): string {

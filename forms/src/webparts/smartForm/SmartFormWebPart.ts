@@ -6,13 +6,8 @@ import {
   PropertyPaneTextField,
   PropertyPaneLabel
 } from '@microsoft/sp-webpart-base';
-import { DisplayMode } from '@microsoft/sp-core-library';
-
 
 import FormApp, { FormAppProps } from './components/FormApp';
-
-  import { spfi } from "@pnp/sp";
-import { SPFx } from "@pnp/sp/presets/all";
 
 export interface ISmartFormWebPartProps {
   /** שם רשימת ה-PMO לעריכה */
@@ -24,13 +19,6 @@ export interface ISmartFormWebPartProps {
 }
 
 export default class SmartFormWebPart extends BaseClientSideWebPart<ISmartFormWebPartProps> {
-
-public async onInit(): Promise<void> {
-  await super.onInit();
-
-  spfi().using(SPFx(this.context)); // global PnP initialization
-}
-
 
   public render(): void {
     // פרש את stepsConfigJson אם קיים
@@ -46,15 +34,12 @@ public async onInit(): Promise<void> {
         console.warn('[SmartForm] stepsConfigJson parse failed:', e);
       }
     }
-    
-    const isEditMode = this.displayMode === DisplayMode.Edit;
 
     const props: FormAppProps = {
       context: this.context,
       pmoListTitle: this.properties.pmoListTitle || 'PMO decisions',
       pmoIntegrationLookupName: this.properties.pmoIntegrationLookupName || 'Integration',
-      stepsConfig,
-      isEditMode
+      stepsConfig
     };
 
     const element = React.createElement(FormApp, props);

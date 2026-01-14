@@ -1,56 +1,56 @@
 {
-    "מספר המכרז שבגינו הבקשה מוגשת": [
-        "Tender number"
-    ],
-    "שלב 1- לפני פרסום / שלב 2 - RFC / שלב 3 - TC RFC.\nהאם ניתן להגדיר מראש כך שימולא אוטומטית בהתאם למכרז הרלוונטי?   (כן, תנאי בSPFX לפי נתונים שיתנו לנו)": [
-        "Tender Phase"
-    ],
-    "זיהוי לפי קו (קו, זה המספר של הרכבת - יש שלוש רכבות M1, M2 ,M3)": [
-        "Originating Line Manager"
-    ],
-    "תאריך - מופיע באופן אוטומטי ביום שליחת טופס הפניה  (מילוי השדה CSPFX לפי התאריךשל היום בו נשלח הטופס)": [
-        "Application Date"
-    ],
-    "מספר סידורי של LM לצרכי זיהוי": [
-        "LM’s reference #"
-    ],
-    "מספר סידורי - האם יוצא מהמערכת באופן אוטומטי?": [
-        "NTA’s reference #"
-    ],
-    "תיאור השינוי המוצע": [
-        "Particulars and description of Proposed Change"
-    ],
-    "הסבר ונימוק לבקשת השינוי": [
-        "Explanation(s) of, and reason(s) for, Proposed Change"
-    ],
-    "ניסוח קיים של הסעיף. בשלבים 2,3 כותרת השדה צריכה להיות שונה": [
-        "For phase 1 - Existing wording of applicable provision(s)\n\nFor phase 2 or 3 - Existing wording of applicable RFC response / TC RFC"
-    ],
-    "שינוי מוצע מהניסוח הקיים/ בשלבים 2,3 כותרת השדה צריכה להיות שונה": [
-        "For phase 1 - Proposed revisions(s) to existing wording of applicable provision(s)\n\nFor phase 2 or 3 -  Proposed revisions(s) to existing wording of applicable RFC response / TC RFC"
-    ],
-    "בחירה באילו מכרזים נוספים השינוי תקף (אף מכרז / כל המכרזים / חלק מהמכרזים - אילו?)": [
-        "Recommendation(s) with respect to other Works Tenders/works contracts (Proposed revisions apply to the selected tender(s))"
-    ],
-    "הסברים ונימוקים להמלצה על שינוי במכרזים נוספים": [
-        "Recommendation(s) with respect to other Works Tenders/works contracts, including explanation(s) of, and reason(s) for, such recommendations and, where relevant, particulars of the views and opinions expressed by the other LM(s):"
-    ],
-    "אם עונה כן, אז נדרש להזין טקסט ארוך.\nאם עונה לא- ממשיך הלאה": [
-        "Related Bidder RFCs exist? Y/N\nIf Y - insert Related Bidder RFCs text here"
-    ],
-    "אם בשדה הקודם ענה לא- מדלג על שדה זה.\nאם בשדה הקודם ענה כן- יש לענות כ/ל בשדה זה.\nאם עונה כן, אז נדרש להזין טקסט ארוך.\nאם עונה לא- ממשיך הלאה": [
-        "If previous is Y - were the Related Bidder RFCs responded by TC? Y/N\nIf Y - insert Related Bidder RFC response text here"
-    ],
-    "שם  / מספר הקבוצה ששלחה את השאלה בשלב 2 או שהשאלה מיועדת להישלח אליה בשלב 3": [
-        "Bidder's number"
-    ],
-    "בחירת קטגוריה": [
-        "Category (Level 1) - Technical / Legal / Financial"
-    ],
-    "בחירת תת-קטגוריה": [
-        "Sub-Category (Level 2)"
-    ],
-    "שם הגורם המטפל": [
-        "Assigned to (Level 3)  - name"
-    ]
+  "מספר המכרז שבגינו הבקשה מוגשת": [
+    "Tender number"
+  ],
+  "שלב 1- לפני פרסום / שלב 2 - RFC / שלב 3 - TC RFC.\nהאם ניתן להגדיר מראש כך שימולא אוטומטית בהתאם למכרז הרלוונטי?   (כן, תנאי בSPFX לפי נתונים שיתנו לנו)": [
+    "Tender Phase"
+  ],
+  "זיהוי לפי קו (קו, זה המספר של הרכבת - יש שלוש רכבות M1, M2 ,M3)": [
+    "Originating Line Manager"
+  ],
+  "תאריך - מופיע באופן אוטומטי ביום שליחת טופס הפניה  (מילוי השדה CSPFX לפי התאריךשל היום בו נשלח הטופס)": [
+    "Application Date"
+  ],
+  "מספר סידורי של LM לצרכי זיהוי": [
+    "LM’s reference #"
+  ],
+  "מספר סידורי - האם יוצא מהמערכת באופן אוטומטי?": [
+    "NTA’s reference #"
+  ],
+  "תיאור השינוי המוצע": [
+    "Particulars and description of Proposed Change"
+  ],
+  "הסבר ונימוק לבקשת השינוי": [
+    "Explanation(s) of, and reason(s) for, Proposed Change"
+  ],
+  "ניסוח קיים של הסעיף. בשלבים 2,3 כותרת השדה צריכה להיות שונה": [
+    "For phase 1 - Existing wording of applicable provision(s)\n\nFor phase 2 or 3 - Existing wording of applicable RFC response / TC RFC"
+  ],
+  "שינוי מוצע מהניסוח הקיים/ בשלבים 2,3 כותרת השדה צריכה להיות שונה": [
+    "For phase 1 - Proposed revisions(s) to existing wording of applicable provision(s)\n\nFor phase 2 or 3 -  Proposed revisions(s) to existing wording of applicable RFC response / TC RFC"
+  ],
+  "בחירה באילו מכרזים נוספים השינוי תקף (אף מכרז / כל המכרזים / חלק מהמכרזים - אילו?)": [
+    "Recommendation(s) with respect to other Works Tenders/works contracts (Proposed revisions apply to the selected tender(s))"
+  ],
+  "הסברים ונימוקים להמלצה על שינוי במכרזים נוספים": [
+    "Recommendation(s) with respect to other Works Tenders/works contracts, including explanation(s) of, and reason(s) for, such recommendations and, where relevant, particulars of the views and opinions expressed by the other LM(s):"
+  ],
+  "אם עונה כן, אז נדרש להזין טקסט ארוך.\nאם עונה לא- ממשיך הלאה": [
+    "Related Bidder RFCs exist? Y/N\nIf Y - insert Related Bidder RFCs text here"
+  ],
+  "אם בשדה הקודם ענה לא- מדלג על שדה זה.\nאם בשדה הקודם ענה כן- יש לענות כ/ל בשדה זה.\nאם עונה כן, אז נדרש להזין טקסט ארוך.\nאם עונה לא- ממשיך הלאה": [
+    "If previous is Y - were the Related Bidder RFCs responded by TC? Y/N\nIf Y - insert Related Bidder RFC response text here"
+  ],
+  "שם  / מספר הקבוצה ששלחה את השאלה בשלב 2 או שהשאלה מיועדת להישלח אליה בשלב 3": [
+    "Bidder's number"
+  ],
+  "בחירת קטגוריה": [
+    "Category (Level 1) - Technical / Legal / Financial"
+  ],
+  "בחירת תת-קטגוריה": [
+    "Sub-Category (Level 2)"
+  ],
+  "שם הגורם המטפל": [
+    "Assigned to (Level 3)  - name"
+  ]
 }
