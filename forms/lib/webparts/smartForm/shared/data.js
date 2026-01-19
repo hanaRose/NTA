@@ -324,8 +324,8 @@ export function savePmoItem(sp, pmoListId, id, draft) {
                     delete payload.Modified;
                     //delete payload.RFCorTcRFCasPublishedByNTaToBeFi;
                     delete payload.RFCorTcRFCasPublishedByNTaNew;
-                    payload.RevisedWordingFinalForPublicatio =
-                        cleanRichText(payload.RevisedWordingFinalForPublicatio);
+                    //payload.RevisedWordingFinalForPublicatio = cleanRichText(payload.RevisedWordingFinalForPublicatio);
+                    console.log("payload.RevisedWordingFinalForPublicatio ", payload.RevisedWordingFinalForPublicatio, "\n____________________\n", cleanRichText(payload.RevisedWordingFinalForPublicatio));
                     console.log('🧾 payload sent to SharePoint:', payload);
                     console.log('🐶 dog in payload:', payload.dog);
                     MULTI_CHOICE_FIELDS = new Set([

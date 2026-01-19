@@ -19,6 +19,7 @@ export declare function buildIntegrationPayloadFromPmo(integrationItem: any, pmo
 export declare function splitTenderAndCreateIntegrationItems(params: {
     sp: any;
     integrationListId: string;
+    workTendersListId: string;
     pmoItem: any;
     itegrationItem: any;
     tenderSourceInternalName: string;
@@ -26,6 +27,10 @@ export declare function splitTenderAndCreateIntegrationItems(params: {
     pmoToIntegrationMap: Record<string, string>;
     linkFieldInternalName?: string;
     linkValue?: number;
+    workTenderTitleField?: string;
+    workTenderOlmField?: string;
+    integrationOlmField?: string;
+    decisionAppliesFieldInternalName?: string;
 }): Promise<void>;
 export type FieldInfoLike = {
     InternalName: string;

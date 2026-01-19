@@ -184,7 +184,17 @@ export function buildIntegrationPayloadFromPmo(
   }
   for (const [pmoInternal, integrationInternal] of Object.entries(pmoToIntegrationMap)) {
     const v = pmoItem?.[pmoInternal];
-    const nv = normalizeForSp(v);
+    let nv = normalizeForSp(v);
+    if(integrationItem.TenderPhase.indexOf("Phase 1") === -1){
+      if(pmoInternal === 'SubCategory'){
+        nv = normalizeForSp(integrationItem?.[integrationInternal]);
+        
+      }
+      if(pmoInternal === 'Assignedto'){
+        nv = normalizeForSp(integrationItem?.[integrationInternal]);
+      }
+    }
+    
     if (nv !== undefined) payload[integrationInternal] = nv;
   }
 
@@ -200,9 +210,12 @@ export function buildIntegrationPayloadFromPmo(
 
   return payload;
 }
+
+/*
 export async function splitTenderAndCreateIntegrationItems(params: {
   sp: any;
   integrationListId: string;      // e5e8eaea-...
+  workTendersListId: string;
   pmoItem: any;                   // הפריט של PMO (מלא)
   itegrationItem: any;
   tenderSourceInternalName: string; // למשל "DecisionAppliesToOtherWorksTende" או "TenderNumber"
@@ -215,6 +228,7 @@ export async function splitTenderAndCreateIntegrationItems(params: {
   const {
     sp,
     integrationListId,
+    workTendersListId,
     pmoItem,
     itegrationItem,
     tenderSourceInternalName,
@@ -223,22 +237,57 @@ export async function splitTenderAndCreateIntegrationItems(params: {
     linkFieldInternalName,
     linkValue,
   } = params;
-
+  console.log("itegrationItem ", itegrationItem);
   const raw = String(pmoItem?.[tenderSourceInternalName] ?? "").trim();
   console.log("🩰 raw ", raw);
-  if(raw === 'Not relevant to additional tenders')return;
+  
+  let appliesWorkTenders = [];
+  if(raw === 'Not relevant to additional tenders'){
+    console.log("raw is not relevant ", raw);
+    return;
+  } 
+  
 
+  const worktendersList = sp.web.lists.getById(workTendersListId);
+ 
+  const tenders = await worktendersList.items
+    .select("Title", "OriginatingLineManager")();
+  console.log("tenders ", tenders);
+  if(raw === 'All Infra 1 tenders'){
+    appliesWorkTenders = tenders;
+    console.log("raw === 'All Infra 1 tenders");
+  }
+  console.log("appliesWorkTenders ",appliesWorkTenders);
   const parts = raw
     .split(",")
     .map(s => s.trim())
     .filter(Boolean);
+  if(raw != 'All Infra 1 tenders'){  
+    const titles = tenders.map((t: { Title?: string }) => String(t.Title ?? "").trim());
 
+    console.log("raw != 'All Infra 1 tenders");
+  for(let i = 0; i< parts.length; i++){
+    console.log("🍖 titles ", titles);
+    if(titles.indexOf(parts[i])>-1){
+
+      console.log("parts[",i,"] ", parts[i]);
+      appliesWorkTenders.push(parts[i]);
+    }
+  }}
+
+  console.log("final appliesWorkTenders ", appliesWorkTenders);
   if (parts.length === 0) return;
+  
   const list = sp.web.lists.getById(integrationListId);
 
   for (const tender of parts) {
-    const extra: any = { [integrationTenderInternalName]: tender };
+    let extra: any = { [integrationTenderInternalName]: tender };
+    console.log("🦤🪿🦩🦚 ")
+    extra["DecisionappliestootherWorksTende"] = { results: ["Not relevant to additional tenders"] };
 
+    //extra["DecisionappliestootherWorksTende"] = "Not relevant to additional tenders";
+
+  
     // אם יש lookup/Reference חובה ברשימת Integration
     if (linkFieldInternalName && linkValue != null) {
       extra[linkFieldInternalName] = linkValue;
@@ -249,6 +298,140 @@ export async function splitTenderAndCreateIntegrationItems(params: {
 
     const fixed = normalizePayloadForSpAdd(payload);
     console.log("✅ fixed payload", fixed);
+    await list.items.add(fixed);
+  }
+}
+*/
+export async function splitTenderAndCreateIntegrationItems(params: {
+  sp: any;
+  integrationListId: string;
+  workTendersListId: string;
+  pmoItem: any;
+  itegrationItem: any;
+  tenderSourceInternalName: string;
+  integrationTenderInternalName?: string;
+  pmoToIntegrationMap: Record<string, string>;
+  linkFieldInternalName?: string;
+  linkValue?: number;
+
+  // OPTIONAL (כדי לא להרוס קריאות קיימות, אבל מאפשר התאמה אם צריך)
+  workTenderTitleField?: string;            // default: "Title"
+  workTenderOlmField?: string;              // default: "OriginatingLineManager"
+  integrationOlmField?: string;             // default: "OriginatingLineManager"
+  decisionAppliesFieldInternalName?: string;// default: "DecisionappliestootherWorksTende"
+}) {
+  const {
+    sp,
+    integrationListId,
+    workTendersListId,
+    pmoItem,
+    itegrationItem,
+    tenderSourceInternalName,
+    integrationTenderInternalName = "TenderNumber",
+    pmoToIntegrationMap,
+    linkFieldInternalName,
+    linkValue,
+
+    workTenderTitleField = "Title",
+    workTenderOlmField = "OriginatingLineManager",
+    integrationOlmField = "OriginatingLineManager",
+    decisionAppliesFieldInternalName = "DecisionappliestootherWorksTende",
+  } = params;
+
+  console.log("itegrationItem ", itegrationItem);
+
+  const raw = String(pmoItem?.[tenderSourceInternalName] ?? "").trim();
+  console.log("🩰 raw ", raw);
+
+  if (!raw) return;
+
+  if (raw === "Not relevant to additional tenders") {
+    console.log("raw is not relevant ", raw);
+    return;
+  }
+
+  const worktendersList = sp.web.lists.getById(workTendersListId);
+
+  // מביאים את כל WorkTenders כדי שנוכל למפות Title -> OLM
+  const tenders: Array<{ [key: string]: any }> = await worktendersList.items
+    .select(workTenderTitleField, workTenderOlmField)();
+
+  console.log("tenders ", tenders);
+
+  // Map לפי title (trim) כדי למצוא מהר
+  const tendersByTitle = new Map<string, { [key: string]: any }>(
+    tenders.map((t) => [String(t?.[workTenderTitleField] ?? "").trim(), t])
+  );
+
+  // בונים את רשימת הטנדרים שנרצה ליצור עבורם פריטי Integration
+  let selectedTitles: string[] = [];
+
+  if (raw === "All Infra 1 tenders") {
+    selectedTitles = tenders
+      .map((t) => String(t?.[workTenderTitleField] ?? "").trim())
+      .filter(Boolean);
+    // 2) מסננים החוצה את ה-TenderPhase של הפריט הנוכחי
+    const phaseToExclude = String(itegrationItem?.TenderNumber ?? "").trim();
+    console.log("phaseToExclude ", phaseToExclude);
+    selectedTitles = selectedTitles.filter((title) => title !== phaseToExclude);
+    console.log("raw === 'All Infra 1 tenders' -> selectedTitles ", selectedTitles);
+  } else {
+    selectedTitles = raw
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    console.log("raw != 'All Infra 1 tenders' -> selectedTitles ", selectedTitles);
+  }
+
+  if (selectedTitles.length === 0) return;
+
+  const list = sp.web.lists.getById(integrationListId);
+
+  // יוצרים פריט חדש ב-Integration עבור כל title שנבחר
+  for (const tenderTitle of selectedTitles) {
+    if (tenderTitle === itegrationItem.TenderPhase)continue;
+    // מוצאים את ה-WorkTender כדי לקחת ממנו OLM
+    const wt = tendersByTitle.get(String(tenderTitle).trim());
+    const olmFromWorkTender = wt ? wt?.[workTenderOlmField] : undefined;
+
+    let extra: any = {
+      [integrationTenderInternalName]: tenderTitle,
+    };
+
+    // ✅ זה השדה שאת רוצה שיהיה "Not relevant..." (נשמר כ-MultiChoice)
+    extra[decisionAppliesFieldInternalName] = {
+      results: ["Not relevant to additional tenders"],
+    };
+
+    extra["coppiedFrom"] = String(itegrationItem.NTA_x2019_s_x0020_reference);
+
+    extra["LM_x2019_sreference"] = String(itegrationItem.NTA_x2019_s_x0020_reference);
+    
+
+
+    // ✅ אם מצאנו OLM ב-WorkTenders – נשפוך אותו ל-Integration
+    if (olmFromWorkTender !== undefined && olmFromWorkTender !== null) {
+      extra[integrationOlmField] = olmFromWorkTender;
+    }
+
+    // lookup/reference אם צריך
+    if (linkFieldInternalName && linkValue != null) {
+      extra[linkFieldInternalName] = linkValue;
+    }
+
+    const payload = buildIntegrationPayloadFromPmo(
+      itegrationItem,
+      pmoItem,
+      pmoToIntegrationMap,
+      extra
+    );
+
+    console.log("🏔️ integration addPayload", payload);
+
+    const fixed = normalizePayloadForSpAdd(payload);
+    console.log("✅ fixed payload", fixed);
+
     await list.items.add(fixed);
   }
 }
@@ -909,7 +1092,10 @@ async function syncPmoToIntegration(
 
         const olm = String(it.OriginatingLineManager || '').trim().toUpperCase(); // 👈 נחלץ את ה־OLM
 
-        const text = preview ? `${id} — ${preview}` : String(id);
+        //const text = preview ? `${id} — ${preview}` : String(id);
+        console.log(preview ? `${id} — ${preview}` : String(id));
+        const text = String(id);
+
         
         if (!showAll && (!olm || !myRolesUpper.includes(olm))) {
           continue;
@@ -1709,7 +1895,8 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
     await splitTenderAndCreateIntegrationItems({
       sp,
       integrationListId: "2c962132-409d-4bf2-9440-3b3b6c7975a0",
-      pmoItem: pmoDraft, // או pmoDraft אצלך (העיקר שזה הדראפט הנקי שאת שומרת)
+      workTendersListId: "a33ec5e6-86c0-439a-9eff-f5807b7764d9",
+      pmoItem: pmoDraft, 
       itegrationItem: integrationItem,
       tenderSourceInternalName: "DecisionAppliesToOtherWorksTende",
       pmoToIntegrationMap: PMO_TO_INTEGRATION_FIELD_MAP,
@@ -2600,7 +2787,8 @@ console.log("🍓🍋🍇🍋‍🟩tenderTeamHideFields", tenderTeamHideFields)
                 />
                 <DefaultButton
                   text={isSplitting ? "Splitting..." : "Split tender"}
-                  onClick={onSplitTenderClick}
+                  onClick={
+                    onSplitTenderClick}
                   disabled={isSplitting || !integrationItem}
                 />
               </div>

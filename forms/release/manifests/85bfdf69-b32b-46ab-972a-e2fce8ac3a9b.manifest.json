@@ -38,7 +38,7 @@
     "scriptResources": {
       "smart-form-web-part": {
         "type": "path",
-        "path": "smart-form-web-part_e2f9d98adda0054d5912.js"
+        "path": "smart-form-web-part.js"
       },
       "react": {
         "type": "component",

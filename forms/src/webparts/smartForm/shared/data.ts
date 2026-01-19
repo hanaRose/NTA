@@ -245,9 +245,8 @@ export async function savePmoItem(
   delete payload.RFCorTcRFCasPublishedByNTaNew;
   
 
-  payload.RevisedWordingFinalForPublicatio =
-    cleanRichText(payload.RevisedWordingFinalForPublicatio);
-
+  //payload.RevisedWordingFinalForPublicatio = cleanRichText(payload.RevisedWordingFinalForPublicatio);
+  console.log("payload.RevisedWordingFinalForPublicatio ", payload.RevisedWordingFinalForPublicatio, "\n____________________\n", cleanRichText(payload.RevisedWordingFinalForPublicatio));
 
   console.log('🧾 payload sent to SharePoint:', payload);
   console.log('🐶 dog in payload:', payload.dog);
