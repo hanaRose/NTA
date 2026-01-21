@@ -906,13 +906,16 @@ export async function splitTenderAndCreateIntegrationItems(params: {
 function splitTenderAndCreateIntegrationItems(params) {
     var _a, _b;
     return __awaiter(this, void 0, void 0, function () {
-        var sp, integrationListId, workTendersListId, pmoItem, itegrationItem, tenderSourceInternalName, _c, integrationTenderInternalName, pmoToIntegrationMap, linkFieldInternalName, linkValue, _d, workTenderTitleField, _e, workTenderOlmField, _f, integrationOlmField, _g, decisionAppliesFieldInternalName, raw, worktendersList, tenders, tendersByTitle, selectedTitles, phaseToExclude_1, list, _i, selectedTitles_1, tenderTitle, wt, olmFromWorkTender, extra, payload, fixed;
-        var _h;
-        return __generator(this, function (_j) {
-            switch (_j.label) {
+        var sp, integrationListId, workTendersListId, pmoItem, itegrationItem, tenderSourceInternalName, _c, integrationTenderInternalName, pmoToIntegrationMap, linkFieldInternalName, linkValue, _d, workTenderTitleField, _e, workTenderOlmField, _f, integrationOlmField, _g, decisionAppliesFieldInternalName, _h, 
+        // 🆕 PMO clone settings
+        pmoDecisionsListId, _j, pmoIntegrationLookupIdField, _k, pmoDecisionAppliesFieldInternalName, _l, pmoSentProtocolFieldInternalName, raw, worktendersList, tenders, tendersByTitle, selectedTitles, phaseToExclude_1, list, pmoList, _i, selectedTitles_1, tenderTitle, wt, olmFromWorkTender, extra, payload, fixed, addRes, createdIntegration, pmoClone, pmoFixed;
+        var _m;
+        return __generator(this, function (_o) {
+            switch (_o.label) {
                 case 0:
-                    sp = params.sp, integrationListId = params.integrationListId, workTendersListId = params.workTendersListId, pmoItem = params.pmoItem, itegrationItem = params.itegrationItem, tenderSourceInternalName = params.tenderSourceInternalName, _c = params.integrationTenderInternalName, integrationTenderInternalName = _c === void 0 ? "TenderNumber" : _c, pmoToIntegrationMap = params.pmoToIntegrationMap, linkFieldInternalName = params.linkFieldInternalName, linkValue = params.linkValue, _d = params.workTenderTitleField, workTenderTitleField = _d === void 0 ? "Title" : _d, _e = params.workTenderOlmField, workTenderOlmField = _e === void 0 ? "OriginatingLineManager" : _e, _f = params.integrationOlmField, integrationOlmField = _f === void 0 ? "OriginatingLineManager" : _f, _g = params.decisionAppliesFieldInternalName, decisionAppliesFieldInternalName = _g === void 0 ? "DecisionappliestootherWorksTende" : _g;
+                    sp = params.sp, integrationListId = params.integrationListId, workTendersListId = params.workTendersListId, pmoItem = params.pmoItem, itegrationItem = params.itegrationItem, tenderSourceInternalName = params.tenderSourceInternalName, _c = params.integrationTenderInternalName, integrationTenderInternalName = _c === void 0 ? "TenderNumber" : _c, pmoToIntegrationMap = params.pmoToIntegrationMap, linkFieldInternalName = params.linkFieldInternalName, linkValue = params.linkValue, _d = params.workTenderTitleField, workTenderTitleField = _d === void 0 ? "Title" : _d, _e = params.workTenderOlmField, workTenderOlmField = _e === void 0 ? "OriginatingLineManager" : _e, _f = params.integrationOlmField, integrationOlmField = _f === void 0 ? "OriginatingLineManager" : _f, _g = params.decisionAppliesFieldInternalName, decisionAppliesFieldInternalName = _g === void 0 ? "DecisionappliestootherWorksTende" : _g, _h = params.pmoDecisionsListId, pmoDecisionsListId = _h === void 0 ? 'e5e8eaea-16db-49d3-ad7c-62f5a2bdd97a' : _h, _j = params.pmoIntegrationLookupIdField, pmoIntegrationLookupIdField = _j === void 0 ? "IntegrationId" : _j, _k = params.pmoDecisionAppliesFieldInternalName, pmoDecisionAppliesFieldInternalName = _k === void 0 ? "DecisionAppliesToOtherWorksTende" : _k, _l = params.pmoSentProtocolFieldInternalName, pmoSentProtocolFieldInternalName = _l === void 0 ? "sentProtocol" : _l;
                     console.log("itegrationItem ", itegrationItem);
+                    console.log("pmoItem ", pmoItem);
                     raw = String((_a = pmoItem === null || pmoItem === void 0 ? void 0 : pmoItem[tenderSourceInternalName]) !== null && _a !== void 0 ? _a : "").trim();
                     console.log("🩰 raw ", raw);
                     if (!raw)
@@ -925,7 +928,7 @@ function splitTenderAndCreateIntegrationItems(params) {
                     return [4 /*yield*/, worktendersList.items
                             .select(workTenderTitleField, workTenderOlmField)()];
                 case 1:
-                    tenders = _j.sent();
+                    tenders = _o.sent();
                     console.log("tenders ", tenders);
                     tendersByTitle = new Map(tenders.map(function (t) { var _a; return [String((_a = t === null || t === void 0 ? void 0 : t[workTenderTitleField]) !== null && _a !== void 0 ? _a : "").trim(), t]; }));
                     selectedTitles = [];
@@ -948,18 +951,22 @@ function splitTenderAndCreateIntegrationItems(params) {
                     if (selectedTitles.length === 0)
                         return [2 /*return*/];
                     list = sp.web.lists.getById(integrationListId);
+                    pmoList = pmoDecisionsListId ? sp.web.lists.getById(pmoDecisionsListId) : null;
                     _i = 0, selectedTitles_1 = selectedTitles;
-                    _j.label = 2;
+                    _o.label = 2;
                 case 2:
-                    if (!(_i < selectedTitles_1.length)) return [3 /*break*/, 5];
+                    if (!(_i < selectedTitles_1.length)) return [3 /*break*/, 6];
                     tenderTitle = selectedTitles_1[_i];
+                    console.log("💒tenderTitle- ", tenderTitle, "  itegrationItem.TenderNumber -", itegrationItem.TenderNumber);
                     if (tenderTitle === itegrationItem.TenderPhase)
-                        return [3 /*break*/, 4];
+                        return [3 /*break*/, 5];
+                    if (tenderTitle.trim() === itegrationItem.TenderNumber.trim())
+                        return [3 /*break*/, 5];
                     wt = tendersByTitle.get(String(tenderTitle).trim());
                     olmFromWorkTender = wt ? wt === null || wt === void 0 ? void 0 : wt[workTenderOlmField] : undefined;
-                    extra = (_h = {},
-                        _h[integrationTenderInternalName] = tenderTitle,
-                        _h);
+                    extra = (_m = {},
+                        _m[integrationTenderInternalName] = tenderTitle,
+                        _m);
                     // ✅ זה השדה שאת רוצה שיהיה "Not relevant..." (נשמר כ-MultiChoice)
                     extra[decisionAppliesFieldInternalName] = {
                         results: ["Not relevant to additional tenders"],
@@ -980,12 +987,46 @@ function splitTenderAndCreateIntegrationItems(params) {
                     console.log("✅ fixed payload", fixed);
                     return [4 /*yield*/, list.items.add(fixed)];
                 case 3:
-                    _j.sent();
-                    _j.label = 4;
+                    addRes = _o.sent();
+                    console.log("addRes =", addRes);
+                    console.log("keys(addRes) =", addRes ? Object.keys(addRes) : null);
+                    createdIntegration = addRes;
+                    console.log("✅ createdIntegration:", createdIntegration);
+                    if (!(pmoList && (createdIntegration === null || createdIntegration === void 0 ? void 0 : createdIntegration.Id))) return [3 /*break*/, 5];
+                    pmoClone = __assign({}, (pmoItem || {}));
+                    // ניקוי שדות מערכת/זהויות כדי שלא יפילו add
+                    delete pmoClone.Id;
+                    delete pmoClone.ID;
+                    delete pmoClone.odata;
+                    delete pmoClone["odata.type"];
+                    delete pmoClone["odata.id"];
+                    delete pmoClone["odata.etag"];
+                    delete pmoClone["odata.editLink"];
+                    delete pmoClone.AuthorId;
+                    delete pmoClone.EditorId;
+                    delete pmoClone.Created;
+                    delete pmoClone.Modified;
+                    delete pmoClone["odata.metadata"];
+                    // ✅ חריגים שביקשת:
+                    // Lookup ל־Integration החדש (בד"כ זה IntegrationId)
+                    pmoClone[pmoIntegrationLookupIdField] = createdIntegration.Id;
+                    // MultiChoice / choice-like לפי מה שביקשת
+                    pmoClone[pmoDecisionAppliesFieldInternalName] = {
+                        results: ["Not relevant to additional tenders"],
+                    };
+                    // sentProtocol = false
+                    pmoClone[pmoSentProtocolFieldInternalName] = false;
+                    pmoFixed = normalizePayloadForSpAdd(pmoClone);
+                    console.log("🧾 PMO clone payload:", pmoFixed);
+                    return [4 /*yield*/, pmoList.items.add(pmoFixed)];
                 case 4:
+                    _o.sent();
+                    console.log("✅ PMO clone item created for integration Id:", createdIntegration.Id);
+                    _o.label = 5;
+                case 5:
                     _i++;
                     return [3 /*break*/, 2];
-                case 5: return [2 /*return*/];
+                case 6: return [2 /*return*/];
             }
         });
     });
@@ -1522,14 +1563,17 @@ var FormApp = function (_a) {
                             return [2 /*return*/];
                         updatePayload = {};
                         for (pmoField in PMO_TO_INTEGRATION_FIELD_MAP) {
+                            console.log("pmoField ", pmoField);
                             if (!Object.prototype.hasOwnProperty.call(PMO_TO_INTEGRATION_FIELD_MAP, pmoField))
                                 continue;
+                            console.log("🧸 Object.prototype.hasOwnProperty.call");
                             integrationField = PMO_TO_INTEGRATION_FIELD_MAP[pmoField];
                             val = pmoDraft ? pmoDraft[pmoField] : undefined;
                             if (typeof val === 'undefined')
                                 continue;
                             if (val === null)
                                 continue;
+                            console.log("🐻 not null or undefined ", val);
                             outVal = val;
                             updatePayload[integrationField] = outVal;
                         }
@@ -2316,9 +2360,9 @@ var FormApp = function (_a) {
                     _c.trys.push([3, 7, , 8]);
                     if (!draftToSave.IntegrationId) return [3 /*break*/, 5];
                     //await syncPmoToIntegration(sp, integrationId, draftToSave);
+                    console.log("🍕 draftToSave ", draftToSave);
                     return [4 /*yield*/, syncPmoToIntegration(sp, draftToSave.IntegrationId, draftToSave)];
                 case 4:
-                    //await syncPmoToIntegration(sp, integrationId, draftToSave);
                     _c.sent();
                     console.log('✅ Synced PMO → INTEGRATION for item', integrationId);
                     return [3 /*break*/, 6];

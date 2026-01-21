@@ -313,6 +313,11 @@ export async function splitTenderAndCreateIntegrationItems(params: {
   pmoToIntegrationMap: Record<string, string>;
   linkFieldInternalName?: string;
   linkValue?: number;
+  // 🆕 PMO clone settings
+  pmoDecisionsListId?: string;               // GUID של PMO Decisions
+  pmoIntegrationLookupIdField?: string;      // default: "IntegrationId" (Lookup)
+  pmoDecisionAppliesFieldInternalName?: string; // default: "DecisionAppliesToOtherWorksTende"
+  pmoSentProtocolFieldInternalName?: string; // default: "sentProtocol"
 
   // OPTIONAL (כדי לא להרוס קריאות קיימות, אבל מאפשר התאמה אם צריך)
   workTenderTitleField?: string;            // default: "Title"
@@ -336,9 +341,16 @@ export async function splitTenderAndCreateIntegrationItems(params: {
     workTenderOlmField = "OriginatingLineManager",
     integrationOlmField = "OriginatingLineManager",
     decisionAppliesFieldInternalName = "DecisionappliestootherWorksTende",
+    // 🆕 PMO clone settings
+    pmoDecisionsListId = 'e5e8eaea-16db-49d3-ad7c-62f5a2bdd97a',
+    pmoIntegrationLookupIdField = "IntegrationId",
+    pmoDecisionAppliesFieldInternalName = "DecisionAppliesToOtherWorksTende",
+    pmoSentProtocolFieldInternalName = "sentProtocol",
+
   } = params;
 
   console.log("itegrationItem ", itegrationItem);
+  console.log("pmoItem ", pmoItem);
 
   const raw = String(pmoItem?.[tenderSourceInternalName] ?? "").trim();
   console.log("🩰 raw ", raw);
@@ -387,10 +399,15 @@ export async function splitTenderAndCreateIntegrationItems(params: {
   if (selectedTitles.length === 0) return;
 
   const list = sp.web.lists.getById(integrationListId);
+  // 🆕 PMO Decisions list (אם הועבר ID)
+  const pmoList = pmoDecisionsListId ? sp.web.lists.getById(pmoDecisionsListId) : null;
+
 
   // יוצרים פריט חדש ב-Integration עבור כל title שנבחר
   for (const tenderTitle of selectedTitles) {
+    console.log("💒tenderTitle- ", tenderTitle, "  itegrationItem.TenderNumber -", itegrationItem.TenderNumber);
     if (tenderTitle === itegrationItem.TenderPhase)continue;
+    if (tenderTitle.trim() === itegrationItem.TenderNumber.trim())continue;
     // מוצאים את ה-WorkTender כדי לקחת ממנו OLM
     const wt = tendersByTitle.get(String(tenderTitle).trim());
     const olmFromWorkTender = wt ? wt?.[workTenderOlmField] : undefined;
@@ -432,7 +449,55 @@ export async function splitTenderAndCreateIntegrationItems(params: {
     const fixed = normalizePayloadForSpAdd(payload);
     console.log("✅ fixed payload", fixed);
 
-    await list.items.add(fixed);
+    // 1) יוצרים Integration חדש
+    const addRes = await list.items.add(fixed);
+    console.log("addRes =", addRes);
+    console.log("keys(addRes) =", addRes ? Object.keys(addRes) : null);
+    const createdIntegration = addRes; // כאן יש Id + שדות שחזרו מהשרת
+
+    console.log("✅ createdIntegration:", createdIntegration);
+
+    // 2) יוצרים PMO חדש שמבוסס על pmoItem (רק אם יש pmoDecisionsListId)
+    if (pmoList && createdIntegration?.Id) {
+      // משכפלים את ה־PMO item
+      const pmoClone: any = { ...(pmoItem || {}) };
+
+      // ניקוי שדות מערכת/זהויות כדי שלא יפילו add
+      delete pmoClone.Id;
+      delete pmoClone.ID;
+      delete pmoClone.odata;
+      delete pmoClone["odata.type"];
+      delete pmoClone["odata.id"];
+      delete pmoClone["odata.etag"];
+      delete pmoClone["odata.editLink"];
+      delete pmoClone.AuthorId;
+      delete pmoClone.EditorId;
+      delete pmoClone.Created;
+      delete pmoClone.Modified;
+      delete pmoClone["odata.metadata"];
+
+      // ✅ חריגים שביקשת:
+      // Lookup ל־Integration החדש (בד"כ זה IntegrationId)
+      pmoClone[pmoIntegrationLookupIdField] = createdIntegration.Id;
+
+      // MultiChoice / choice-like לפי מה שביקשת
+      pmoClone[pmoDecisionAppliesFieldInternalName] = {
+        results: ["Not relevant to additional tenders"],
+      };
+
+      // sentProtocol = false
+      pmoClone[pmoSentProtocolFieldInternalName] = false;
+      //pmoClone["RevisionIncludesChangeInTenderDo"] = "This item was created in splitTenderAndCreateIntegrationItems function";
+
+      // חשוב: אם יש אצלכם שדות MultiChoice נוספים שעולים כ-null,
+      // ייתכן שתצטרכי כאן normalizePayloadForSpAdd(pmoClone) כמו באינטגרציה.
+      const pmoFixed = normalizePayloadForSpAdd(pmoClone);
+
+      console.log("🧾 PMO clone payload:", pmoFixed);
+      await pmoList.items.add(pmoFixed);
+      console.log("✅ PMO clone item created for integration Id:", createdIntegration.Id);
+    }
+
   }
 }
 
@@ -1008,14 +1073,15 @@ async function syncPmoToIntegration(
   const updatePayload: any = {};
 
     for (const pmoField in PMO_TO_INTEGRATION_FIELD_MAP) {
+      console.log("pmoField ", pmoField);
       if (!Object.prototype.hasOwnProperty.call(PMO_TO_INTEGRATION_FIELD_MAP, pmoField)) continue;
-
+      console.log("🧸 Object.prototype.hasOwnProperty.call");
       const integrationField = PMO_TO_INTEGRATION_FIELD_MAP[pmoField];
       const val = pmoDraft ? pmoDraft[pmoField] : undefined;
 
       if (typeof val === 'undefined') continue;
       if (val === null) continue;
-
+      console.log("🐻 not null or undefined ", val);
 
       let outVal = val;
 
@@ -1818,6 +1884,7 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
 
           if ( draftToSave.IntegrationId) {//integrationId ||
             //await syncPmoToIntegration(sp, integrationId, draftToSave);
+            console.log("🍕 draftToSave ", draftToSave);
             await syncPmoToIntegration(sp,  draftToSave.IntegrationId, draftToSave);
             console.log('✅ Synced PMO → INTEGRATION for item', integrationId);
           } else {
@@ -1827,20 +1894,7 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
           console.error('❌ Failed to sync PMO → INTEGRATION', syncErr);
           // לא מפילים למשתמש את השמירה – זה רק סנכרון עזר
         }
-        /*
-        if(options?.updateEditingDate){
-            console.log("🩰 options?.updateEditingDate", options?.updateEditingDate);
-            await splitTenderAndCreateIntegrationItems({
-              sp,
-              integrationListId: '2c962132-409d-4bf2-9440-3b3b6c7975a0',
-              pmoItem: draftToSave, // או draftToSave אם את בטוחה שהוא מלא ונקי
-              itegrationItem: integrationItem,
-              tenderSourceInternalName: "DecisionAppliesToOtherWorksTende", // או "TenderNumber"
-              pmoToIntegrationMap: PMO_TO_INTEGRATION_FIELD_MAP,
-              linkFieldInternalName: "NTA_x2019_s_x0020_reference", // אם קיים אצלכם
-              linkValue: draftToSave?.IntegrationId, // או saved?.Id — לפי מה שהשדה מצפה
-            });  
-        }*/
+        
 
         // ✅ בסוף onSave:
         if (options?.updateEditingDate === true) {

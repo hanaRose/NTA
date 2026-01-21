@@ -27,6 +27,10 @@ export declare function splitTenderAndCreateIntegrationItems(params: {
     pmoToIntegrationMap: Record<string, string>;
     linkFieldInternalName?: string;
     linkValue?: number;
+    pmoDecisionsListId?: string;
+    pmoIntegrationLookupIdField?: string;
+    pmoDecisionAppliesFieldInternalName?: string;
+    pmoSentProtocolFieldInternalName?: string;
     workTenderTitleField?: string;
     workTenderOlmField?: string;
     integrationOlmField?: string;
