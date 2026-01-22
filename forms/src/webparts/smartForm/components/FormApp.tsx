@@ -34,6 +34,7 @@ import EditableFields from './EditableFields';
 import '@pnp/sp/views';
 import '@pnp/sp/lists';
 
+
 // ===== עיצוב בסיסי (צבעים, כרטיסים וכו') =====
 const PAGE_BG = 'linear-gradient(135deg, #f4f6fb 0%, #e7f2ff 40%, #f9fafb 100%)';
 const CARD_BG = '#ffffff';
@@ -45,9 +46,128 @@ const RELOAD_GUARD_LIST_TITLE = "ReloadGuard";
 const RELOAD_GUARD_USER_FIELD = "User";          // Person field
 const RELOAD_GUARD_FLAG_FIELD = "HasReloadedOnce"; // Boolean field
 
+/**
+ * 1) קוראת את כל המכרזים (Title) מרשימת SharePoint ומחזירה Set של שמות (trim).
+ *    - עובדת גם אם יש יותר מ-5000 פריטים (ע"י paging).
+ */
+/*
+export async function fetchAllTenderTitles(params: {
+  sp: any;
+  workTendersListId: string;     // GUID של הרשימה
+  titleFieldInternalName?: string; // default: "LinkTitle"
+}): Promise<Set<string>> {
+  const { sp, workTendersListId, titleFieldInternalName = "LinkTitle" } = params;
+  console.log("❤️‍🩹0");
+  const list = sp.web.lists.getById(workTendersListId);
+  console.log("❤️‍🩹1");
+  const titles = new Set<string>();
+  console.log("❤️‍🩹2");
+  // paging (PnPjs)
+  //const pageSize = 2000;
+  console.log("❤️‍🩹3");
+  let items = await list.items.select(titleFieldInternalName).getAll();;
+  console.log("❤️‍🩹4");
+  for (const item of items) {
+    const t = String(item?.[titleFieldInternalName] ?? "").trim();
+    if (t) titles.add(t);
+  }
+
+  return titles;
+}
+*/
+export async function fetchAllTenderTitles(params: {
+  sp: any;
+  workTendersListId: string;
+  titleFieldInternalName?: string;
+}): Promise<Set<string>> {
+  const { sp, workTendersListId, titleFieldInternalName = "LinkTitle" } = params;
+
+  const list = sp.web.lists.getById(workTendersListId);
+  const titles = new Set<string>();
+
+  const pageSize = 2000;
+  let lastId = 0;
+
+  while (true) {
+    // PnPjs v3+ (invokable): הסוף הוא () ולא .get()
+    const batch = await list.items
+      .select("Id", titleFieldInternalName)
+      .filter(`Id gt ${lastId}`)
+      .orderBy("Id", true)
+      .top(pageSize)();
+
+    for (const item of batch) {
+      const t = String(item?.[titleFieldInternalName] ?? "").trim();
+      if (t) titles.add(t);
+    }
+
+    if (batch.length < pageSize) break;
+    lastId = batch[batch.length - 1].Id;
+  }
+
+  titles.add('');
+  return titles;
+}
+
+/**
+ * 2) בודקת שהמחרוזת היא:
+ *    - בדיוק "All Infra 1 tenders"
+ *    - או בדיוק "Not relevant to additional tenders"
+ *    - או רשימת ערכים מופרדת בפסיקים, כשכל ערך קיים ברשימת המכרזים (Title)
+ *    - בלי "עוד מילים" ובלי ערכים לא מוכרים.
+ */
+export function isValidTenderSelection(params: {
+  input: string;
+  validTitles: Set<string>;
+  allowAllInfra?: boolean; // default true
+  allowNotRelevant?: boolean; // default true
+}): boolean {
+  const {
+    input,
+    validTitles,
+    allowAllInfra = true,
+    allowNotRelevant = true,
+  } = params;
+  
+  const raw = String(input ?? "").trim();
+  console.log("💒🛹🧸raw |", raw,"|");
+  //if (!raw) return false;
+  console.log("💒1");
+  const ALL = "All Infra 1 tenders";
+  const NOT_REL = "Not relevant to additional tenders";
+
+  // אם זה בדיוק אחד משני הערכים המיוחדים
+  if (allowAllInfra && raw === ALL) return true;
+  console.log("💒2");
+  if (allowNotRelevant && raw === NOT_REL) return true;
+  console.log("💒3");
+  if(raw === '  ') return true;
+  console.log("💒4");
+  // אחרת: חייב להיות CSV של מכרזים קיימים בלבד
+  const parts = raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  console.log("💒5");
+  console.log("💒6");
+  // חובה שכל חלק יהיה מכרז קיים
+   if (parts.length != 0) {
+    for (const p of parts) {
+      console.log("💒7 p ", p);
+      if (!validTitles.has(p)) return false;
+      console.log("💒8 p ", p);
+    }
+  }
+  
+  console.log("💒9");
+  return true;
+}
+
+
 async function sleep(ms: number) {
   return new Promise(res => setTimeout(res, ms));
 }
+
 export function buildPmoUpdatePayloadFromItem(pmoItem: any) {
   // Fields you should NOT update back to SharePoint
   const BLOCK = new Set([
@@ -972,6 +1092,11 @@ const FormApp: React.FC<FormAppProps> = ({
   const [busy, setBusy] = useState<boolean>(false);
   const [msg, setMsg] = useState<{ type: MessageBarType; text: string } | null>(null);
 
+  const [allowedTenderTitles, setAllowedTenderTitles] = React.useState<Set<string>>(new Set());
+  const [allowedTenderTitlesReady, setAllowedTenderTitlesReady] = React.useState(false);
+
+ 
+
   // ----- שדות חובה בטופס PMO decisions -----
   const REQUIRED_FIELDS: string[] = [
     'DecisionRegardingProposedChange',
@@ -1187,7 +1312,30 @@ async function syncPmoToIntegration(
       loadIntegrationChoices();
     }, [sp, myRoles]);
 
+    React.useEffect(() => {
+    let disposed = false;
 
+    (async () => {
+      try {
+        const titles = await fetchAllTenderTitles({
+          sp,
+          workTendersListId: "a33ec5e6-86c0-439a-9eff-f5807b7764d9",
+          titleFieldInternalName: "LinkTitle",
+        });
+        console.log("after fetchAllTenderTitles");
+
+        if (!disposed) {
+          setAllowedTenderTitles(titles);
+          setAllowedTenderTitlesReady(true);
+        }
+      } catch (e) {
+        console.error("Failed to load tenders list titles", e);
+        if (!disposed) setAllowedTenderTitlesReady(false);
+      }
+    })();
+
+    return () => { disposed = true; };
+  }, [sp]);
 
   const loadIntegrationMeta = async () => {
     const fields = await sp.web.lists
@@ -1570,8 +1718,18 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
   
   const onChangeField = (internal: string, value: any) => {
     console.log("⛔ allowed");
+    const toCsvString = (v: any) => {
+      if (typeof v === "string") return v;
+      if (Array.isArray(v)) return v.join(",");
+      if (v?.results && Array.isArray(v.results)) return v.results.join(",");
+      return String(v ?? "");
+    };
     if (internal === 'DecisionAppliesToOtherWorksTende') {
-    const allowed = [
+      if (!allowedTenderTitlesReady) {
+        console.warn("Tender titles not loaded yet - blocking change for now");
+        return; // או תחליטי לא לחסום, אבל זה הכי בטוח
+      }
+    /*let allowed = [
       'All Infra 1 tenders',
       'Not relevant to additional tenders',
       'Infra#1 DB - M3-WP2', 
@@ -1645,17 +1803,28 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
       'M3-WPO (Outer Boxes),Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M3-WP2,Infra#1 DB - M2-WP3',
       'M3-WPO (Outer Boxes),Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M2-WP3,Infra#1 DB - M3-WP2',
       ''
-    ];
-
-    const vStr = String(value ?? '').trim();
-    console.log("vStr 🦒 ", vStr);
+    ];*/
+    const vStr = toCsvString(value).trim();
+    console.log("vStr 🦒 -", vStr,"-");
+    //const vStr = String(value ?? '').trim();
+    //console.log("vStr 🦒 ", vStr);
+     const ok = isValidTenderSelection({
+        input: vStr,
+        validTitles: allowedTenderTitles,
+      });
+      console.log("ok ", ok);
+     if (!ok) {
+      console.warn("Blocked invalid value for DecisionAppliesToOtherWorksTende:", vStr);
+      return; // ⛔ לא מעדכנים ל-draft
+    }
+    /*
     if (allowed.indexOf(vStr) === -1) {
       console.log("OI VEU 🦒😭🔮");
       console.warn('Blocked invalid value for DecisionAppliesToOtherWorksTende:', value);
 
       
       return; // ⛔ לא מעדכנים ל-draft
-    }
+    }*/
 
    
   }
@@ -2122,7 +2291,24 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
   useEffect(() => {
     const v = String(pmoDraft?.DecisionAppliesToOtherWorksTende ?? '').trim();
     if (!v) return;
-    //const vDecisionRegardingProposedChange = String(pmoDraft?.DecisionRegardingProposedChange??'').trim();
+    const toCsvString = (v: any) => {
+      if (typeof v === "string") return v;
+      if (Array.isArray(v)) return v.join(",");
+      if (v?.results && Array.isArray(v.results)) return v.results.join(",");
+      return String(v ?? "");
+    };
+    const vStr = toCsvString(v).trim();
+    console.log("vStr 🐻 ", vStr);
+    if (!allowedTenderTitlesReady) {
+      console.warn("Tender titles not loaded yet - blocking change for now");
+      return; // או תחליטי לא לחסום, אבל זה הכי בטוח
+    }
+
+    const ok = isValidTenderSelection({
+        input: vStr,
+        validTitles: allowedTenderTitles,
+      });
+     /*
     let allowed = [
       'All Infra 1 tenders',
       'Not relevant to additional tenders',
@@ -2197,11 +2383,11 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
       'M3-WPO (Outer Boxes),Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M3-WP2,Infra#1 DB - M2-WP3',
       'M3-WPO (Outer Boxes),Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M2-WP3,Infra#1 DB - M3-WP2',
       ''
-    ];
+    ];*/
    
     
 
-    if (allowed.indexOf(v) === -1) {
+    if (!ok) {
       console.warn('Auto-fixing invalid DecisionAppliesToOtherWorksTende:', v);
 
       setPmoDraft((prev:any) => ({
@@ -2214,6 +2400,20 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
         text: `Field "Decision Applies" had invalid value "${v}" and was cleared.`
       });
     }
+    /*
+    if (allowed.indexOf(v) === -1) {
+      console.warn('Auto-fixing invalid DecisionAppliesToOtherWorksTende:', v);
+
+      setPmoDraft((prev:any) => ({
+        ...prev,
+        DecisionAppliesToOtherWorksTende: null
+      }));
+
+      setMsg({
+        type: MessageBarType.warning,
+        text: `Field "Decision Applies" had invalid value "${v}" and was cleared.`
+      });
+    }*/
   }, [pmoDraft?.DecisionAppliesToOtherWorksTende]);
 
   useEffect(() => {

@@ -4,6 +4,28 @@ import type { SPFI } from '@pnp/sp';
 import '@pnp/sp/site-users/web';
 import '@pnp/sp/views';
 import '@pnp/sp/lists';
+/**
+ * 1) קוראת את כל המכרזים (Title) מרשימת SharePoint ומחזירה Set של שמות (trim).
+ *    - עובדת גם אם יש יותר מ-5000 פריטים (ע"י paging).
+ */
+export declare function fetchAllTenderTitles(params: {
+    sp: any;
+    workTendersListId: string;
+    titleFieldInternalName?: string;
+}): Promise<Set<string>>;
+/**
+ * 2) בודקת שהמחרוזת היא:
+ *    - בדיוק "All Infra 1 tenders"
+ *    - או בדיוק "Not relevant to additional tenders"
+ *    - או רשימת ערכים מופרדת בפסיקים, כשכל ערך קיים ברשימת המכרזים (Title)
+ *    - בלי "עוד מילים" ובלי ערכים לא מוכרים.
+ */
+export declare function isValidTenderSelection(params: {
+    input: string;
+    validTitles: Set<string>;
+    allowAllInfra?: boolean;
+    allowNotRelevant?: boolean;
+}): boolean;
 export declare function buildPmoUpdatePayloadFromItem(pmoItem: any): any;
 export declare function updateAutoCreatedPmoDecisionItem(params: {
     sp: any;
