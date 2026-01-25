@@ -1952,15 +1952,17 @@ var FormApp = function (_a) {
                     return [4 /*yield*/, savePmoItem(sp, PMO_LIST_ID, pmoItem.Id, draftToSave)];
                 case 2:
                     saved = _c.sent();
+                    console.log("🍕 saved ", saved);
                     setPmoItem(saved);
                     setPmoDraft(saved);
                     setMsg({ type: MessageBarType.success, text: 'Saved successfully.' });
                     setValidationErrors({});
                     // ---- אם אין שגיאות חובה, ממשיכים לשמור ----
-                    console.log("🦘3");
+                    console.log("🦘saved ", saved);
                     _c.label = 3;
                 case 3:
                     _c.trys.push([3, 7, , 8]);
+                    draftToSave.DueDateCalculated = saved.DueDateCalculated;
                     if (!draftToSave.IntegrationId) return [3 /*break*/, 5];
                     //await syncPmoToIntegration(sp, integrationId, draftToSave);
                     console.log("🍕 draftToSave ", draftToSave);

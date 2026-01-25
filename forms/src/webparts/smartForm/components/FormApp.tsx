@@ -2038,7 +2038,7 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
        
 
         const saved = await savePmoItem(sp, PMO_LIST_ID, pmoItem.Id, draftToSave);
-       
+        console.log("🍕 saved ", saved);
 
         setPmoItem(saved);
         setPmoDraft(saved);
@@ -2046,11 +2046,11 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
         setValidationErrors({});
 
       // ---- אם אין שגיאות חובה, ממשיכים לשמור ----
-      console.log("🦘3");
+      console.log("🦘saved ", saved);
 
         // 🆕 אחרי שה-PMO נשמר בהצלחה – נסנכרן גם ל-INTEGRATION
         try {
-
+          draftToSave.DueDateCalculated = saved.DueDateCalculated;
           if ( draftToSave.IntegrationId) {//integrationId ||
             //await syncPmoToIntegration(sp, integrationId, draftToSave);
             console.log("🍕 draftToSave ", draftToSave);
