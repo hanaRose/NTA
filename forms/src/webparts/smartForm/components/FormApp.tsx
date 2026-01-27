@@ -2935,12 +2935,12 @@ console.log("🍓🍋🍇🍋‍🟩tenderTeamHideFields", tenderTeamHideFields)
                 }
 
                 // אופציונלי (מומלץ): אם יש התאמה מלאה לטקסט של אופציה – נבחר אותה אוטומטית
-                const tt = t.trim().toLowerCase();
+                /*const tt = t.trim().toLowerCase();
                 if (!tt) return;
                 const exact = integrationChoices.find(
                   o => String(o.text ?? "").trim().toLowerCase() === tt
                 );
-                if (exact) setIntegrationId(exact.key as number);
+                if (exact) setIntegrationId(exact.key as number);*/
               }}
 
               onChange={(_, opt, __, value) => {

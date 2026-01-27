@@ -2665,12 +2665,12 @@ var FormApp = function (_a) {
                                         setIntegrationId(null);
                                 }
                                 // אופציונלי (מומלץ): אם יש התאמה מלאה לטקסט של אופציה – נבחר אותה אוטומטית
-                                var tt = t.trim().toLowerCase();
-                                if (!tt)
-                                    return;
-                                var exact = integrationChoices.find(function (o) { var _a; return String((_a = o.text) !== null && _a !== void 0 ? _a : "").trim().toLowerCase() === tt; });
-                                if (exact)
-                                    setIntegrationId(exact.key);
+                                /*const tt = t.trim().toLowerCase();
+                                if (!tt) return;
+                                const exact = integrationChoices.find(
+                                  o => String(o.text ?? "").trim().toLowerCase() === tt
+                                );
+                                if (exact) setIntegrationId(exact.key as number);*/
                             }, onChange: function (_, opt, __, value) {
                                 var _a;
                                 if (opt) {
