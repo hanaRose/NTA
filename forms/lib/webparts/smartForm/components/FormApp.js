@@ -2613,6 +2613,7 @@ var FormApp = function (_a) {
     console.log("🍓 TenderCommitteeApprovalDate", TENDER_TEAM_FIELDS.indexOf('TenderCommitteeApprovalDate') > -1 && tenderTeamHideFields.indexOf('TenderCommitteeApprovalDate') <= -1);
     console.log("🍇 StatusOfRFCresponseOrTcRFC", TENDER_TEAM_FIELDS.indexOf('StatusOfRFCresponseOrTcRFC') > -1 && tenderTeamHideFields.indexOf('StatusOfRFCresponseOrTcRFC') <= -1);
     console.log("🍓🍋🍇🍋‍🟩tenderTeamHideFields", tenderTeamHideFields);
+    // למעלה בקומפוננטה (לפני ה-return)
     return (React.createElement("div", { dir: "ltr", style: {
             background: PAGE_BG,
             minHeight: '100vh',
@@ -2649,40 +2650,45 @@ var FormApp = function (_a) {
                                 { key: 'M2', text: 'M2' },
                                 { key: 'M3', text: 'M3' },
                             ], styles: { root: { maxWidth: 220 } } }),
-                        React.createElement(ComboBox, { label: "Search Integration by NTA reference", placeholder: busy ? 'Loading…' : 'Start typing to search…', options: filteredIntegrationChoices, selectedKey: integrationId !== null && integrationId !== void 0 ? integrationId : undefined, text: integrationSearch, autoComplete: "on", allowFreeform: true, openOnKeyboardFocus: true, useComboBoxAsMenuWidth: true, onFocus: function () {
-                                setIntegrationId(null);
-                                setIntegrationSearch('');
-                                //setComboOpen(true);
-                            }, onInputValueChange: function (text) {
-                                var t = text !== null && text !== void 0 ? text : '';
+                        React.createElement(ComboBox, { label: "Search Integration by NTA reference", placeholder: busy ? "Loading…" : "Start typing to search…", options: filteredIntegrationChoices, selectedKey: integrationId !== null && integrationId !== void 0 ? integrationId : null, text: integrationSearch, autoComplete: "off", allowFreeform: true, openOnKeyboardFocus: true, useComboBoxAsMenuWidth: true, 
+                            // לא לאפס כאן! זה שובר בחירה מרשימה.
+                            // onFocus / onClick הוסרו בכוונה.
+                            onInputValueChange: function (text) {
+                                var _a;
+                                var t = text !== null && text !== void 0 ? text : "";
                                 setIntegrationSearch(t);
-                                if (!t.trim()) {
-                                    setIntegrationId(null);
-                                    return;
-                                }
-                                if (integrationId !== null) {
+                                // אם המשתמש מתחיל להקליד משהו שלא שווה בדיוק לטקסט של הבחירה הקודמת → מנקים בחירה
+                                if (integrationId != null) {
                                     var chosen = integrationChoices.find(function (o) { return o.key === integrationId; });
-                                    if (chosen && String(chosen.text || '') !== t) {
+                                    var chosenText = String((_a = chosen === null || chosen === void 0 ? void 0 : chosen.text) !== null && _a !== void 0 ? _a : "");
+                                    if (chosenText !== t)
                                         setIntegrationId(null);
-                                    }
                                 }
-                            }, onClick: function () {
-                                setIntegrationId(null);
-                                setIntegrationSearch('');
-                                //setComboOpen(true);
+                                // אופציונלי (מומלץ): אם יש התאמה מלאה לטקסט של אופציה – נבחר אותה אוטומטית
+                                var tt = t.trim().toLowerCase();
+                                if (!tt)
+                                    return;
+                                var exact = integrationChoices.find(function (o) { var _a; return String((_a = o.text) !== null && _a !== void 0 ? _a : "").trim().toLowerCase() === tt; });
+                                if (exact)
+                                    setIntegrationId(exact.key);
                             }, onChange: function (_, opt, __, value) {
                                 var _a;
                                 if (opt) {
+                                    // בחירה מתוך הרשימה (קליק/אנטר)
                                     setIntegrationId(opt.key);
-                                    setIntegrationSearch((_a = opt.text) !== null && _a !== void 0 ? _a : '');
+                                    setIntegrationSearch(String((_a = opt.text) !== null && _a !== void 0 ? _a : ""));
+                                    return;
                                 }
-                                else {
-                                    setIntegrationId(null);
-                                    setIntegrationSearch(value !== null && value !== void 0 ? value : '');
-                                }
+                                // Freeform: המשתמש רק הקליד טקסט
+                                var t = value !== null && value !== void 0 ? value : "";
+                                setIntegrationSearch(t);
+                                // אם זה בדיוק שם של אופציה – נשמור ID, אחרת נשאיר null
+                                var tt = t.trim().toLowerCase();
+                                var exact = integrationChoices.find(function (o) { var _a; return String((_a = o.text) !== null && _a !== void 0 ? _a : "").trim().toLowerCase() === tt; });
+                                setIntegrationId(exact ? exact.key : null);
                             }, styles: {
                                 root: { minWidth: 540 },
-                                label: { fontWeight: 600 }
+                                label: { fontWeight: 600 },
                             } })),
                     React.createElement(DefaultButton, { text: "Refresh list", onClick: loadIntegrationChoices, disabled: busy, styles: {
                             root: { borderRadius: 999, paddingInline: 18 },

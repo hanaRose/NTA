@@ -2819,7 +2819,9 @@ console.log("🍋 Addendum", TENDER_TEAM_FIELDS.indexOf('Addendum') > -1 && tend
 console.log("🍓 TenderCommitteeApprovalDate",TENDER_TEAM_FIELDS.indexOf('TenderCommitteeApprovalDate') > -1 && tenderTeamHideFields.indexOf('TenderCommitteeApprovalDate') <= -1 );
 console.log("🍇 StatusOfRFCresponseOrTcRFC",TENDER_TEAM_FIELDS.indexOf('StatusOfRFCresponseOrTcRFC') > -1 && tenderTeamHideFields.indexOf('StatusOfRFCresponseOrTcRFC') <= -1 );
 console.log("🍓🍋🍇🍋‍🟩tenderTeamHideFields", tenderTeamHideFields);
+// למעלה בקומפוננטה (לפני ה-return)
 
+    
   return (
     <div
       dir="ltr"
@@ -2905,59 +2907,69 @@ console.log("🍓🍋🍇🍋‍🟩tenderTeamHideFields", tenderTeamHideFields)
                 styles={{ root: { maxWidth: 220 } }}
               />
             
-              <ComboBox
-                label="Search Integration by NTA reference"
-                placeholder={busy ? 'Loading…' : 'Start typing to search…'}
-                options={filteredIntegrationChoices}
-                selectedKey={integrationId ?? undefined}
-                text={integrationSearch}
-                autoComplete="on"
-                allowFreeform
-                openOnKeyboardFocus
-                useComboBoxAsMenuWidth
-                onFocus={() => {
-                  setIntegrationId(null);
-                  setIntegrationSearch('');
-                  //setComboOpen(true);
+            
 
-                }}
-                onInputValueChange={(text?: string) => {
-                  const t = text ?? '';
-                  setIntegrationSearch(t);
+            <ComboBox
+              label="Search Integration by NTA reference"
+              placeholder={busy ? "Loading…" : "Start typing to search…"}
+              options={filteredIntegrationChoices}
+              selectedKey={integrationId ?? null}
+              text={integrationSearch}
+              autoComplete="off"
+              allowFreeform
+              openOnKeyboardFocus
+              useComboBoxAsMenuWidth
 
-                  if (!t.trim()) {
-                    setIntegrationId(null);
-                    return;
-                  }
+              // לא לאפס כאן! זה שובר בחירה מרשימה.
+              // onFocus / onClick הוסרו בכוונה.
 
-                  if (integrationId !== null) {
-                    const chosen = integrationChoices.find(o => o.key === integrationId);
-                    if (chosen && String(chosen.text || '') !== t) {
-                      setIntegrationId(null);
-                    }
-                  }
-                }}
+              onInputValueChange={(text?: string) => {
+                const t = text ?? "";
+                setIntegrationSearch(t);
 
-                onClick={() => {
-                  setIntegrationId(null);
-                  setIntegrationSearch('');
-                  //setComboOpen(true);
-                }}
+                // אם המשתמש מתחיל להקליד משהו שלא שווה בדיוק לטקסט של הבחירה הקודמת → מנקים בחירה
+                if (integrationId != null) {
+                  const chosen = integrationChoices.find(o => o.key === integrationId);
+                  const chosenText = String(chosen?.text ?? "");
+                  if (chosenText !== t) setIntegrationId(null);
+                }
 
-                onChange={(_, opt, __, value) => {
-                  if (opt) {
-                    setIntegrationId(opt.key as number);
-                    setIntegrationSearch(opt.text ?? '');
-                  } else {
-                    setIntegrationId(null);
-                    setIntegrationSearch(value ?? '');
-                  }
-                }}
-                styles={{
-                  root: { minWidth: 540 },
-                  label: { fontWeight: 600 }
-                }}
-              />
+                // אופציונלי (מומלץ): אם יש התאמה מלאה לטקסט של אופציה – נבחר אותה אוטומטית
+                const tt = t.trim().toLowerCase();
+                if (!tt) return;
+                const exact = integrationChoices.find(
+                  o => String(o.text ?? "").trim().toLowerCase() === tt
+                );
+                if (exact) setIntegrationId(exact.key as number);
+              }}
+
+              onChange={(_, opt, __, value) => {
+                if (opt) {
+                  // בחירה מתוך הרשימה (קליק/אנטר)
+                  setIntegrationId(opt.key as number);
+                  setIntegrationSearch(String(opt.text ?? ""));
+                  return;
+                }
+
+                // Freeform: המשתמש רק הקליד טקסט
+                const t = value ?? "";
+                setIntegrationSearch(t);
+
+                // אם זה בדיוק שם של אופציה – נשמור ID, אחרת נשאיר null
+                const tt = t.trim().toLowerCase();
+                const exact = integrationChoices.find(
+                  o => String(o.text ?? "").trim().toLowerCase() === tt
+                );
+                setIntegrationId(exact ? (exact.key as number) : null);
+              }}
+
+              styles={{
+                root: { minWidth: 540 },
+                label: { fontWeight: 600 },
+              }}
+            />
+
+          
             </Stack>
 
             <DefaultButton
