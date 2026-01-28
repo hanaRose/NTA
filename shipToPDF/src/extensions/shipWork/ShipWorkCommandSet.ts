@@ -509,9 +509,14 @@ private async _fetchIntegrationItemForRow(row: RowAccessor): Promise<any | null>
       this._getTextFromRow(pmoRow, 'Category') ||
       this._getTextFromIntegration(integrationItem, 'Category');
 
+    //const decision =
+    //  this._getTextFromRow(pmoRow, 'DecisionAppliesToOtherWorksTende') ||
+    //  this._getTextFromIntegration(integrationItem, 'DecisionappliestootherWorksTende');
+
     const decision =
-      this._getTextFromRow(pmoRow, 'DecisionAppliesToOtherWorksTende') ||
-      this._getTextFromIntegration(integrationItem, 'DecisionappliestootherWorksTende');
+      this._getTextFromRow(pmoRow, 'Recommendation_x0028_s_x0029_wit') ||
+      this._getTextFromIntegration(integrationItem, 'Recommendation_x0028_s_x0029_wit');
+
 
     const particulars =
       this._getTextFromRow(pmoRow, 'ParticularsAndDescriptionOfPropo') ||
@@ -534,8 +539,11 @@ private async _fetchIntegrationItemForRow(row: RowAccessor): Promise<any | null>
     const proposedInt2 = this._getTextFromIntegration(integrationItem, 'Proposedrevisions_x0028_s_x0029_0');
     const proposed = proposedPmo || proposedInt1 || proposedInt2;
 
-    const recPmo = this._getTextFromRow(pmoRow, 'Recommendation_x0028_s_x0029_wit');
-    const recInt1 = this._getTextFromIntegration(integrationItem, 'Recommendation_x0028_s_x0029_wit');
+    //const recPmo = this._getTextFromRow(pmoRow, 'Recommendation_x0028_s_x0029_wit');
+    //const recInt1 = this._getTextFromIntegration(integrationItem, 'Recommendation_x0028_s_x0029_wit');
+    //const recInt2 = this._getTextFromIntegration(integrationItem, 'Recommendation_x0028_s_x0029_wit0');
+    const recPmo = this._getTextFromRow(pmoRow, 'Recommendation_x0028_s_x0029_wit0');
+    const recInt1 = this._getTextFromIntegration(integrationItem, 'Recommendation_x0028_s_x0029_wit0');
     const recInt2 = this._getTextFromIntegration(integrationItem, 'Recommendation_x0028_s_x0029_wit0');
     const recommendation = recPmo || recInt1 || recInt2;
 
