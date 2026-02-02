@@ -212,7 +212,7 @@ var EditableFields = function (_a) {
                 paddingTop: 4,
             }
         } }, keys.map(function (internal) {
-        var _a, _b;
+        var _a;
         if (!internal)
             return null;
         var tenderPhaseStr = String(tenderPhase || '').trim().toLowerCase();
@@ -224,6 +224,7 @@ var EditableFields = function (_a) {
         //|| internalToTitle[internal] || internal;
         var hint = helpTextFor(info);
         var editable = canEdit ? !!canEdit(internal) : true;
+        console.log("🎸editable ", editable, " !!canEdit(internal) ", !!canEdit(internal), " internal ", internal);
         var required = editable && REQUIRED_FIELDS.indexOf(internal) > -1;
         var error = errorMap[internal];
         console.log('🤗tenderPhaseLc ', tenderPhaseStr);
@@ -283,7 +284,7 @@ var EditableFields = function (_a) {
             console.log("🤩 2");
             var decision = String((item === null || item === void 0 ? void 0 : item.RevisionIncludesChangeInTenderDo) || '').trim();
             console.log('🍩🎈decision ', decision);
-            if (decision != 'Yes') {
+            if (decision != 'Yes' && tenderPhaseStr.indexOf('phase 3') == -1) {
                 console.log("🐴🐴🐴 decision != 'true' editefileds");
                 return null;
             }
@@ -366,18 +367,20 @@ var EditableFields = function (_a) {
             })();
             var current_1 = val;
             var isIntegrationDecision_1 = internal === 'IntegrationTeamDecisionImplement';
-            var appliesVal = String((_a = item === null || item === void 0 ? void 0 : item['DecisionAppliesToOtherWorksTende']) !== null && _a !== void 0 ? _a : '').trim();
-            var allowByDependency = (appliesVal === 'All Infra 1 tenders' || appliesVal === 'Infra#1 DB - M3-WP2' || appliesVal === 'Infra#1 DB - M2-WP3'
-                || appliesVal === 'Infra#1 DB - M1-WP1 + WP2' || appliesVal === 'M3-WPO (Outer Boxes)' ||
-                appliesVal.indexOf('All Infra 1 tenders') !== -1 ||
-                appliesVal.indexOf('Infra#1 DB - M3-WP2') !== -1 || appliesVal.indexOf('Infra#1 DB - M2-WP3') !== -1 ||
-                appliesVal.indexOf('Infra#1 DB - M1-WP1 + WP2') !== -1 || appliesVal.indexOf('M3-WPO (Outer Boxes)') !== -1);
+            //const appliesVal = String(item?.['DecisionAppliesToOtherWorksTende'] ?? '').trim();
+            var allowByDependency = true; // (appliesVal != '');
+            /*(appliesVal === 'All Infra 1 tenders' || appliesVal === 'Infra#1 DB - M3-WP2'|| appliesVal === 'Infra#1 DB - M2-WP3'
+              || appliesVal === 'Infra#1 DB - M1-WP1 + WP2' || appliesVal ==='M3-WPO (Outer Boxes)' ||
+              appliesVal.indexOf('All Infra 1 tenders') !== -1 ||
+              appliesVal.indexOf('Infra#1 DB - M3-WP2') !== -1 || appliesVal.indexOf('Infra#1 DB - M2-WP3') !== -1 ||
+                appliesVal.indexOf('Infra#1 DB - M1-WP1 + WP2') !== -1 || appliesVal.indexOf('M3-WPO (Outer Boxes)') !== -1);*/
             var decisionDate_1 = formatDateDDMMYYYY((item === null || item === void 0 ? void 0 : item['DateForIntegrationTeamDecisionIm'])
                 ? String(item['DateForIntegrationTeamDecisionIm']).trim()
                 : '');
             var disabledComputed = isIntegrationDecision_1
                 ? (!allowByDependency || !editable)
                 : (!editable);
+            console.log("🛖disabledComputed ", disabledComputed);
             /*
             const options: IDropdownOption[] = (choiceOverrides[internal] || rawChoices).map((ch: any) => {
               if (typeof ch === 'string') {
@@ -497,7 +500,7 @@ var EditableFields = function (_a) {
             var plain = htmlToPlainText(val);
             return (React.createElement(TextField, { key: internal, label: label, description: hint, multiline: true, autoAdjustHeight: true, value: htmlToPlainText(val), placeholder: placeholder
                     ? placeholder
-                    : (plain.trim() === '' ? ((_b = placeholderMap === null || placeholderMap === void 0 ? void 0 : placeholderMap[internal]) !== null && _b !== void 0 ? _b : undefined) : undefined), 
+                    : (plain.trim() === '' ? ((_a = placeholderMap === null || placeholderMap === void 0 ? void 0 : placeholderMap[internal]) !== null && _a !== void 0 ? _a : undefined) : undefined), 
                 /*
                 placeholder=
                   (!val || String(htmlToPlainText(val)).trim() === '')

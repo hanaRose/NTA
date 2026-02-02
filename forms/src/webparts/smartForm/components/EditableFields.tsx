@@ -230,6 +230,7 @@ const EditableFields: React.FC<Props> = ({
         //|| internalToTitle[internal] || internal;
         const hint = helpTextFor(info);
         const editable = canEdit ? !!canEdit(internal) : true;
+        console.log("🎸editable ", editable, " !!canEdit(internal) ", !!canEdit(internal)," internal ", internal);
         const required = editable && REQUIRED_FIELDS.indexOf(internal) > -1;
         const error = errorMap[internal];
 
@@ -305,7 +306,7 @@ const EditableFields: React.FC<Props> = ({
           console.log("🤩 2");
           const decision = String(item?.RevisionIncludesChangeInTenderDo || '').trim();
           console.log('🍩🎈decision ', decision);
-          if (decision != 'Yes') {
+          if (decision != 'Yes' && tenderPhaseStr.indexOf('phase 3') == -1) {
             console.log("🐴🐴🐴 decision != 'true' editefileds");
             return null;
           }
@@ -456,12 +457,13 @@ const EditableFields: React.FC<Props> = ({
 
           const current = val;
           const isIntegrationDecision = internal === 'IntegrationTeamDecisionImplement';
-          const appliesVal = String(item?.['DecisionAppliesToOtherWorksTende'] ?? '').trim();
-          const allowByDependency = (appliesVal === 'All Infra 1 tenders' || appliesVal === 'Infra#1 DB - M3-WP2'|| appliesVal === 'Infra#1 DB - M2-WP3'
+          //const appliesVal = String(item?.['DecisionAppliesToOtherWorksTende'] ?? '').trim();
+          const allowByDependency = true;// (appliesVal != '');
+          /*(appliesVal === 'All Infra 1 tenders' || appliesVal === 'Infra#1 DB - M3-WP2'|| appliesVal === 'Infra#1 DB - M2-WP3'
             || appliesVal === 'Infra#1 DB - M1-WP1 + WP2' || appliesVal ==='M3-WPO (Outer Boxes)' ||
             appliesVal.indexOf('All Infra 1 tenders') !== -1 ||
             appliesVal.indexOf('Infra#1 DB - M3-WP2') !== -1 || appliesVal.indexOf('Infra#1 DB - M2-WP3') !== -1 ||
-              appliesVal.indexOf('Infra#1 DB - M1-WP1 + WP2') !== -1 || appliesVal.indexOf('M3-WPO (Outer Boxes)') !== -1);
+              appliesVal.indexOf('Infra#1 DB - M1-WP1 + WP2') !== -1 || appliesVal.indexOf('M3-WPO (Outer Boxes)') !== -1);*/
           const decisionDate = formatDateDDMMYYYY(
             item?.['DateForIntegrationTeamDecisionIm']
               ? String(item['DateForIntegrationTeamDecisionIm']).trim()
@@ -471,7 +473,7 @@ const EditableFields: React.FC<Props> = ({
           const disabledComputed = isIntegrationDecision
             ? (!allowByDependency || !editable)
             : (!editable);
-
+          console.log("🛖disabledComputed ", disabledComputed);
           /*
           const options: IDropdownOption[] = (choiceOverrides[internal] || rawChoices).map((ch: any) => {
             if (typeof ch === 'string') {

@@ -297,6 +297,7 @@ export function savePmoItem(sp, pmoListId, id, draft) {
                     isPhase23 = tenderPhaseStr.indexOf('phase 2') > -1 ||
                         tenderPhaseStr.indexOf('phase 3') > -1;
                     if (isPhase23) {
+                        console.log("🥔isPhase23 ", isPhase23);
                         delete payload.Assignedto;
                         delete payload.AssignedtoId; // אם זה People/Lookup – לפעמים נשמר כך
                         delete payload['Sub_x002d_Category'];

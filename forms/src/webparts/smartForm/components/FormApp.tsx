@@ -305,7 +305,7 @@ export function buildIntegrationPayloadFromPmo(
   for (const [pmoInternal, integrationInternal] of Object.entries(pmoToIntegrationMap)) {
     const v = pmoItem?.[pmoInternal];
     let nv = normalizeForSp(v);
-    if(integrationItem.TenderPhase.indexOf("Phase 1") === -1){
+    if(integrationItem.TenderPhase.indexOf("Phase 1") === -1){//===
       if(pmoInternal === 'SubCategory'){
         nv = normalizeForSp(integrationItem?.[integrationInternal]);
         
@@ -331,97 +331,6 @@ export function buildIntegrationPayloadFromPmo(
   return payload;
 }
 
-/*
-export async function splitTenderAndCreateIntegrationItems(params: {
-  sp: any;
-  integrationListId: string;      // e5e8eaea-...
-  workTendersListId: string;
-  pmoItem: any;                   // הפריט של PMO (מלא)
-  itegrationItem: any;
-  tenderSourceInternalName: string; // למשל "DecisionAppliesToOtherWorksTende" או "TenderNumber"
-  integrationTenderInternalName?: string; // ברירת מחדל "TenderNumber"
-  pmoToIntegrationMap: Record<string, string>; // PMO_TO_INTEGRATION_FIELD_MAP
-  // אם יש לכם עמודת lookup ב-Integration שמצביעה ל-PMO/Reference - תוסיפי כאן:
-  linkFieldInternalName?: string; // למשל "NTA_x2019_s_x0020_reference"
-  linkValue?: number;            // למשל pmoItem.IntegrationId או pmoItem.Id (מה שמתאים אצלכם)
-}) {
-  const {
-    sp,
-    integrationListId,
-    workTendersListId,
-    pmoItem,
-    itegrationItem,
-    tenderSourceInternalName,
-    integrationTenderInternalName = "TenderNumber",
-    pmoToIntegrationMap,
-    linkFieldInternalName,
-    linkValue,
-  } = params;
-  console.log("itegrationItem ", itegrationItem);
-  const raw = String(pmoItem?.[tenderSourceInternalName] ?? "").trim();
-  console.log("🩰 raw ", raw);
-  
-  let appliesWorkTenders = [];
-  if(raw === 'Not relevant to additional tenders'){
-    console.log("raw is not relevant ", raw);
-    return;
-  } 
-  
-
-  const worktendersList = sp.web.lists.getById(workTendersListId);
- 
-  const tenders = await worktendersList.items
-    .select("Title", "OriginatingLineManager")();
-  console.log("tenders ", tenders);
-  if(raw === 'All Infra 1 tenders'){
-    appliesWorkTenders = tenders;
-    console.log("raw === 'All Infra 1 tenders");
-  }
-  console.log("appliesWorkTenders ",appliesWorkTenders);
-  const parts = raw
-    .split(",")
-    .map(s => s.trim())
-    .filter(Boolean);
-  if(raw != 'All Infra 1 tenders'){  
-    const titles = tenders.map((t: { Title?: string }) => String(t.Title ?? "").trim());
-
-    console.log("raw != 'All Infra 1 tenders");
-  for(let i = 0; i< parts.length; i++){
-    console.log("🍖 titles ", titles);
-    if(titles.indexOf(parts[i])>-1){
-
-      console.log("parts[",i,"] ", parts[i]);
-      appliesWorkTenders.push(parts[i]);
-    }
-  }}
-
-  console.log("final appliesWorkTenders ", appliesWorkTenders);
-  if (parts.length === 0) return;
-  
-  const list = sp.web.lists.getById(integrationListId);
-
-  for (const tender of parts) {
-    let extra: any = { [integrationTenderInternalName]: tender };
-    console.log("🦤🪿🦩🦚 ")
-    extra["DecisionappliestootherWorksTende"] = { results: ["Not relevant to additional tenders"] };
-
-    //extra["DecisionappliestootherWorksTende"] = "Not relevant to additional tenders";
-
-  
-    // אם יש lookup/Reference חובה ברשימת Integration
-    if (linkFieldInternalName && linkValue != null) {
-      extra[linkFieldInternalName] = linkValue;
-    }
-
-    const payload = buildIntegrationPayloadFromPmo(itegrationItem, pmoItem, pmoToIntegrationMap, extra);
-    console.log("🏔️ integration addPayload", payload);
-
-    const fixed = normalizePayloadForSpAdd(payload);
-    console.log("✅ fixed payload", fixed);
-    await list.items.add(fixed);
-  }
-}
-*/
 export async function splitTenderAndCreateIntegrationItems(params: {
   sp: any;
   integrationListId: string;
@@ -471,7 +380,7 @@ export async function splitTenderAndCreateIntegrationItems(params: {
 
   console.log("itegrationItem ", itegrationItem);
   console.log("pmoItem ", pmoItem);
-
+  console.log("🪁 pmoItem.sentProtocol ", pmoItem.sentProtocol);
   const raw = String(pmoItem?.[tenderSourceInternalName] ?? "").trim();
   console.log("🩰 raw ", raw);
 
@@ -606,7 +515,7 @@ export async function splitTenderAndCreateIntegrationItems(params: {
       };
 
       // sentProtocol = false
-      pmoClone[pmoSentProtocolFieldInternalName] = false;
+      pmoClone[pmoSentProtocolFieldInternalName] = pmoItem.sentProtocol;//false;
       //pmoClone["RevisionIncludesChangeInTenderDo"] = "This item was created in splitTenderAndCreateIntegrationItems function";
 
       // חשוב: אם יש אצלכם שדות MultiChoice נוספים שעולים כ-null,
@@ -1553,6 +1462,7 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
     );
     setPmoItem(pmoFound);
     setPmoDraft(pmoFound);
+    console.log("pmoFound ", pmoFound);
     // טעינת הרשאות לפי fieldPermission + קבוצות גלובליות + צוות מכרז מתוך ה-Integration
     const [permMap, general, tenderTeamUsers] = await Promise.all([
       loadFieldPermissionMap(sp),
@@ -1729,81 +1639,7 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
         console.warn("Tender titles not loaded yet - blocking change for now");
         return; // או תחליטי לא לחסום, אבל זה הכי בטוח
       }
-    /*let allowed = [
-      'All Infra 1 tenders',
-      'Not relevant to additional tenders',
-      'Infra#1 DB - M3-WP2', 
-      'Infra#1 DB - M2-WP3',
-      'Infra#1 DB - M1-WP1 + WP2', 
-      'M3-WPO (Outer Boxes)',
-      'Infra#1 DB - M3-WP2,Infra#1 DB - M2-WP3', 
-      'Infra#1 DB - M3-WP2,Infra#1 DB - M1-WP1 + WP2',
-      'Infra#1 DB - M3-WP2,M3-WPO (Outer Boxes)', 
-      'Infra#1 DB - M2-WP3,Infra#1 DB - M3-WP2',
-      'Infra#1 DB - M2-WP3,Infra#1 DB - M1-WP1 + WP2',
-      'Infra#1 DB - M2-WP3,M3-WPO (Outer Boxes)',
-      'Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M3-WP2', 
-      'Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M2-WP3',
-      'Infra#1 DB - M1-WP1 + WP2,M3-WPO (Outer Boxes)',
-      'M3-WPO (Outer Boxes),Infra#1 DB - M3-WP2',
-      'M3-WPO (Outer Boxes),Infra#1 DB - M2-WP3',
-      'M3-WPO (Outer Boxes),Infra#1 DB - M1-WP1 + WP2', 
-      'Infra#1 DB - M3-WP2,Infra#1 DB - M2-WP3,Infra#1 DB - M1-WP1 + WP2',
-      'Infra#1 DB - M3-WP2,Infra#1 DB - M2-WP3,M3-WPO (Outer Boxes)',
-      'Infra#1 DB - M3-WP2,Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M2-WP3',
-      'Infra#1 DB - M3-WP2,Infra#1 DB - M1-WP1 + WP2,M3-WPO (Outer Boxes)',
-      'Infra#1 DB - M3-WP2,M3-WPO (Outer Boxes),Infra#1 DB - M2-WP3',
-      'Infra#1 DB - M3-WP2,M3-WPO (Outer Boxes),Infra#1 DB - M1-WP1 + WP2',
-
-      'Infra#1 DB - M2-WP3,Infra#1 DB - M3-WP2,Infra#1 DB - M1-WP1 + WP2',
-      'Infra#1 DB - M2-WP3,Infra#1 DB - M3-WP2,M3-WPO (Outer Boxes)',
-      'Infra#1 DB - M2-WP3,Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M3-WP2',
-      'Infra#1 DB - M2-WP3,Infra#1 DB - M1-WP1 + WP2,M3-WPO (Outer Boxes)',
-      'Infra#1 DB - M2-WP3,M3-WPO (Outer Boxes),Infra#1 DB - M3-WP2',
-      'Infra#1 DB - M2-WP3,M3-WPO (Outer Boxes),Infra#1 DB - M1-WP1 + WP2',
-
-      'Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M3-WP2,Infra#1 DB - M2-WP3',
-      'Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M3-WP2,M3-WPO (Outer Boxes)',
-      'Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M2-WP3,Infra#1 DB - M3-WP2',
-      'Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M2-WP3,M3-WPO (Outer Boxes)',
-      'Infra#1 DB - M1-WP1 + WP2,M3-WPO (Outer Boxes),Infra#1 DB - M3-WP2',
-      'Infra#1 DB - M1-WP1 + WP2,M3-WPO (Outer Boxes),Infra#1 DB - M2-WP3',
-
-      'M3-WPO (Outer Boxes),Infra#1 DB - M3-WP2,Infra#1 DB - M2-WP3',
-      'M3-WPO (Outer Boxes),Infra#1 DB - M3-WP2,Infra#1 DB - M1-WP1 + WP2',
-      'M3-WPO (Outer Boxes),Infra#1 DB - M2-WP3,Infra#1 DB - M3-WP2',
-      'M3-WPO (Outer Boxes),Infra#1 DB - M2-WP3,Infra#1 DB - M1-WP1 + WP2',
-      'M3-WPO (Outer Boxes),Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M3-WP2',
-      'M3-WPO (Outer Boxes),Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M2-WP3',
-      'Infra#1 DB - M3-WP2,Infra#1 DB - M2-WP3,Infra#1 DB - M1-WP1 + WP2,M3-WPO (Outer Boxes)',
-      'Infra#1 DB - M3-WP2,Infra#1 DB - M2-WP3,M3-WPO (Outer Boxes),Infra#1 DB - M1-WP1 + WP2',
-      'Infra#1 DB - M3-WP2,Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M2-WP3,M3-WPO (Outer Boxes)',
-      'Infra#1 DB - M3-WP2,Infra#1 DB - M1-WP1 + WP2,M3-WPO (Outer Boxes),Infra#1 DB - M2-WP3',
-      'Infra#1 DB - M3-WP2,M3-WPO (Outer Boxes),Infra#1 DB - M2-WP3,Infra#1 DB - M1-WP1 + WP2',
-      'Infra#1 DB - M3-WP2,M3-WPO (Outer Boxes),Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M2-WP3',
-
-      'Infra#1 DB - M2-WP3,Infra#1 DB - M3-WP2,Infra#1 DB - M1-WP1 + WP2,M3-WPO (Outer Boxes)',
-      'Infra#1 DB - M2-WP3,Infra#1 DB - M3-WP2,M3-WPO (Outer Boxes),Infra#1 DB - M1-WP1 + WP2',
-      'Infra#1 DB - M2-WP3,Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M3-WP2,M3-WPO (Outer Boxes)',
-      'Infra#1 DB - M2-WP3,Infra#1 DB - M1-WP1 + WP2,M3-WPO (Outer Boxes),Infra#1 DB - M3-WP2',
-      'Infra#1 DB - M2-WP3,M3-WPO (Outer Boxes),Infra#1 DB - M3-WP2,Infra#1 DB - M1-WP1 + WP2',
-      'Infra#1 DB - M2-WP3,M3-WPO (Outer Boxes),Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M3-WP2',
-
-      'Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M3-WP2,Infra#1 DB - M2-WP3,M3-WPO (Outer Boxes)',
-      'Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M3-WP2,M3-WPO (Outer Boxes),Infra#1 DB - M2-WP3',
-      'Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M2-WP3,Infra#1 DB - M3-WP2,M3-WPO (Outer Boxes)',
-      'Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M2-WP3,M3-WPO (Outer Boxes),Infra#1 DB - M3-WP2',
-      'Infra#1 DB - M1-WP1 + WP2,M3-WPO (Outer Boxes),Infra#1 DB - M3-WP2,Infra#1 DB - M2-WP3',
-      'Infra#1 DB - M1-WP1 + WP2,M3-WPO (Outer Boxes),Infra#1 DB - M2-WP3,Infra#1 DB - M3-WP2',
-
-      'M3-WPO (Outer Boxes),Infra#1 DB - M3-WP2,Infra#1 DB - M2-WP3,Infra#1 DB - M1-WP1 + WP2',
-      'M3-WPO (Outer Boxes),Infra#1 DB - M3-WP2,Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M2-WP3',
-      'M3-WPO (Outer Boxes),Infra#1 DB - M2-WP3,Infra#1 DB - M3-WP2,Infra#1 DB - M1-WP1 + WP2',
-      'M3-WPO (Outer Boxes),Infra#1 DB - M2-WP3,Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M3-WP2',
-      'M3-WPO (Outer Boxes),Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M3-WP2,Infra#1 DB - M2-WP3',
-      'M3-WPO (Outer Boxes),Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M2-WP3,Infra#1 DB - M3-WP2',
-      ''
-    ];*/
+   
     const vStr = toCsvString(value).trim();
     console.log("vStr 🦒 -", vStr,"-");
     //const vStr = String(value ?? '').trim();
@@ -2249,12 +2085,14 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
 
   // האם "Applies" מאפשר עריכה?
   const appliesVal = String(pmoDraft?.[APPLIES_FIELD] || '').trim();
-  const canEdit_ITDI =
-   (appliesVal === 'All Infra 1 tenders' || appliesVal === 'Infra#1 DB - M3-WP2'|| appliesVal === 'Infra#1 DB - M2-WP3'
+  const canEdit_ITDI = (appliesVal != '');
+  const not_Relevant = (appliesVal === 'Not relevant to additional tenders');
+  /* (appliesVal === 'All Infra 1 tenders' || appliesVal === 'Infra#1 DB - M3-WP2'|| appliesVal === 'Infra#1 DB - M2-WP3'
   || appliesVal === 'Infra#1 DB - M1-WP1 + WP2' || appliesVal ==='M3-WPO (Outer Boxes)' ||
   appliesVal.indexOf('All Infra 1 tenders') !== -1 ||
    appliesVal.indexOf('Infra#1 DB - M3-WP2') !== -1 || appliesVal.indexOf('Infra#1 DB - M2-WP3') !== -1 ||
     appliesVal.indexOf('Infra#1 DB - M1-WP1 + WP2') !== -1 || appliesVal.indexOf('M3-WPO (Outer Boxes)') !== -1);
+*/
 
 
 
@@ -2277,16 +2115,37 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
       tenderPStr.indexOf('phase 2') !== -1; 
     console.log("🥗canEdit_ITDI ", canEdit_ITDI, " pmoDraft?.['StatusOfRFCresponseOrTcRFC'] === 'Issued' ",  pmoDraft?.['StatusOfRFCresponseOrTcRFC'] === 'Issued', " isPhase2 ", isPhase2, " " );
     console.log("🥨dateText ", dateText);
-    const itdiOptions = (canEdit_ITDI && ((isPhase2 &&  pmoDraft?.['StatusOfRFCresponseOrTcRFC'] === 'Issued') ||(!isPhase2)))
+    const itdiOptions =
+      not_Relevant
+        ? [
+            { key: 'Done', text: dateText ? `Done — ${dateText}` : 'Done' },
+            { key: 'Pending', text: dateText ? `Pending — ${dateText}` : 'Pending' },
+            { key: 'Not required', text: 'Not required' },
+          ]
+        : (canEdit_ITDI && ((isPhase2 && pmoDraft?.['StatusOfRFCresponseOrTcRFC'] === 'Issued') || !isPhase2))
+          ? [
+              { key: 'Done', text: dateText ? `Done — ${dateText}` : 'Done' },
+              { key: 'Pending', text: dateText ? `Pending — ${dateText}` : 'Pending' },
+            ]
+          : canEdit_ITDI
+            ? [
+                { key: 'Pending', text: dateText ? `Pending — ${dateText}` : 'Pending' },
+              ]
+            : [
+                { key: 'Not required', text: 'Not required' },
+              ];
+
+    /*const itdiOptions = (!not_Relevant && canEdit_ITDI && ((isPhase2 &&  pmoDraft?.['StatusOfRFCresponseOrTcRFC'] === 'Issued') ||(!isPhase2)))
     ? [
       { key: 'Done', text: dateText ? `Done — ${dateText}` : 'Done' },
       { key: 'Pending', text: dateText ? `Pending — ${dateText}` : 'Pending' }
-    ]:canEdit_ITDI ? [
+    ]
+    :canEdit_ITDI ? [
       { key: 'Pending', text: dateText ? `Pending — ${dateText}` : 'Pending' }
     ]
     : [
       { key: 'Not required', text: 'Not required' },
-    ];
+    ];*/
   
   useEffect(() => {
     const v = String(pmoDraft?.DecisionAppliesToOtherWorksTende ?? '').trim();
@@ -2308,82 +2167,7 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
         input: vStr,
         validTitles: allowedTenderTitles,
       });
-     /*
-    let allowed = [
-      'All Infra 1 tenders',
-      'Not relevant to additional tenders',
-      'Infra#1 DB - M3-WP2', 
-      'Infra#1 DB - M2-WP3',
-      'Infra#1 DB - M1-WP1 + WP2', 
-      'M3-WPO (Outer Boxes)',
-      'Infra#1 DB - M3-WP2,Infra#1 DB - M2-WP3', 
-      'Infra#1 DB - M3-WP2,Infra#1 DB - M1-WP1 + WP2',
-      'Infra#1 DB - M3-WP2,M3-WPO (Outer Boxes)', 
-      'Infra#1 DB - M2-WP3,Infra#1 DB - M3-WP2',
-      'Infra#1 DB - M2-WP3,Infra#1 DB - M1-WP1 + WP2',
-      'Infra#1 DB - M2-WP3,M3-WPO (Outer Boxes)',
-      'Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M3-WP2', 
-      'Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M2-WP3',
-      'Infra#1 DB - M1-WP1 + WP2,M3-WPO (Outer Boxes)',
-      'M3-WPO (Outer Boxes),Infra#1 DB - M3-WP2',
-      'M3-WPO (Outer Boxes),Infra#1 DB - M2-WP3',
-      'M3-WPO (Outer Boxes),Infra#1 DB - M1-WP1 + WP2', 
-      'Infra#1 DB - M3-WP2,Infra#1 DB - M2-WP3,Infra#1 DB - M1-WP1 + WP2',
-      'Infra#1 DB - M3-WP2,Infra#1 DB - M2-WP3,M3-WPO (Outer Boxes)',
-      'Infra#1 DB - M3-WP2,Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M2-WP3',
-      'Infra#1 DB - M3-WP2,Infra#1 DB - M1-WP1 + WP2,M3-WPO (Outer Boxes)',
-      'Infra#1 DB - M3-WP2,M3-WPO (Outer Boxes),Infra#1 DB - M2-WP3',
-      'Infra#1 DB - M3-WP2,M3-WPO (Outer Boxes),Infra#1 DB - M1-WP1 + WP2',
-
-      'Infra#1 DB - M2-WP3,Infra#1 DB - M3-WP2,Infra#1 DB - M1-WP1 + WP2',
-      'Infra#1 DB - M2-WP3,Infra#1 DB - M3-WP2,M3-WPO (Outer Boxes)',
-      'Infra#1 DB - M2-WP3,Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M3-WP2',
-      'Infra#1 DB - M2-WP3,Infra#1 DB - M1-WP1 + WP2,M3-WPO (Outer Boxes)',
-      'Infra#1 DB - M2-WP3,M3-WPO (Outer Boxes),Infra#1 DB - M3-WP2',
-      'Infra#1 DB - M2-WP3,M3-WPO (Outer Boxes),Infra#1 DB - M1-WP1 + WP2',
-
-      'Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M3-WP2,Infra#1 DB - M2-WP3',
-      'Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M3-WP2,M3-WPO (Outer Boxes)',
-      'Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M2-WP3,Infra#1 DB - M3-WP2',
-      'Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M2-WP3,M3-WPO (Outer Boxes)',
-      'Infra#1 DB - M1-WP1 + WP2,M3-WPO (Outer Boxes),Infra#1 DB - M3-WP2',
-      'Infra#1 DB - M1-WP1 + WP2,M3-WPO (Outer Boxes),Infra#1 DB - M2-WP3',
-
-      'M3-WPO (Outer Boxes),Infra#1 DB - M3-WP2,Infra#1 DB - M2-WP3',
-      'M3-WPO (Outer Boxes),Infra#1 DB - M3-WP2,Infra#1 DB - M1-WP1 + WP2',
-      'M3-WPO (Outer Boxes),Infra#1 DB - M2-WP3,Infra#1 DB - M3-WP2',
-      'M3-WPO (Outer Boxes),Infra#1 DB - M2-WP3,Infra#1 DB - M1-WP1 + WP2',
-      'M3-WPO (Outer Boxes),Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M3-WP2',
-      'M3-WPO (Outer Boxes),Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M2-WP3',
-      'Infra#1 DB - M3-WP2,Infra#1 DB - M2-WP3,Infra#1 DB - M1-WP1 + WP2,M3-WPO (Outer Boxes)',
-      'Infra#1 DB - M3-WP2,Infra#1 DB - M2-WP3,M3-WPO (Outer Boxes),Infra#1 DB - M1-WP1 + WP2',
-      'Infra#1 DB - M3-WP2,Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M2-WP3,M3-WPO (Outer Boxes)',
-      'Infra#1 DB - M3-WP2,Infra#1 DB - M1-WP1 + WP2,M3-WPO (Outer Boxes),Infra#1 DB - M2-WP3',
-      'Infra#1 DB - M3-WP2,M3-WPO (Outer Boxes),Infra#1 DB - M2-WP3,Infra#1 DB - M1-WP1 + WP2',
-      'Infra#1 DB - M3-WP2,M3-WPO (Outer Boxes),Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M2-WP3',
-
-      'Infra#1 DB - M2-WP3,Infra#1 DB - M3-WP2,Infra#1 DB - M1-WP1 + WP2,M3-WPO (Outer Boxes)',
-      'Infra#1 DB - M2-WP3,Infra#1 DB - M3-WP2,M3-WPO (Outer Boxes),Infra#1 DB - M1-WP1 + WP2',
-      'Infra#1 DB - M2-WP3,Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M3-WP2,M3-WPO (Outer Boxes)',
-      'Infra#1 DB - M2-WP3,Infra#1 DB - M1-WP1 + WP2,M3-WPO (Outer Boxes),Infra#1 DB - M3-WP2',
-      'Infra#1 DB - M2-WP3,M3-WPO (Outer Boxes),Infra#1 DB - M3-WP2,Infra#1 DB - M1-WP1 + WP2',
-      'Infra#1 DB - M2-WP3,M3-WPO (Outer Boxes),Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M3-WP2',
-
-      'Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M3-WP2,Infra#1 DB - M2-WP3,M3-WPO (Outer Boxes)',
-      'Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M3-WP2,M3-WPO (Outer Boxes),Infra#1 DB - M2-WP3',
-      'Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M2-WP3,Infra#1 DB - M3-WP2,M3-WPO (Outer Boxes)',
-      'Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M2-WP3,M3-WPO (Outer Boxes),Infra#1 DB - M3-WP2',
-      'Infra#1 DB - M1-WP1 + WP2,M3-WPO (Outer Boxes),Infra#1 DB - M3-WP2,Infra#1 DB - M2-WP3',
-      'Infra#1 DB - M1-WP1 + WP2,M3-WPO (Outer Boxes),Infra#1 DB - M2-WP3,Infra#1 DB - M3-WP2',
-
-      'M3-WPO (Outer Boxes),Infra#1 DB - M3-WP2,Infra#1 DB - M2-WP3,Infra#1 DB - M1-WP1 + WP2',
-      'M3-WPO (Outer Boxes),Infra#1 DB - M3-WP2,Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M2-WP3',
-      'M3-WPO (Outer Boxes),Infra#1 DB - M2-WP3,Infra#1 DB - M3-WP2,Infra#1 DB - M1-WP1 + WP2',
-      'M3-WPO (Outer Boxes),Infra#1 DB - M2-WP3,Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M3-WP2',
-      'M3-WPO (Outer Boxes),Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M3-WP2,Infra#1 DB - M2-WP3',
-      'M3-WPO (Outer Boxes),Infra#1 DB - M1-WP1 + WP2,Infra#1 DB - M2-WP3,Infra#1 DB - M3-WP2',
-      ''
-    ];*/
+     
    
     
 
@@ -2400,20 +2184,7 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
         text: `Field "Decision Applies" had invalid value "${v}" and was cleared.`
       });
     }
-    /*
-    if (allowed.indexOf(v) === -1) {
-      console.warn('Auto-fixing invalid DecisionAppliesToOtherWorksTende:', v);
-
-      setPmoDraft((prev:any) => ({
-        ...prev,
-        DecisionAppliesToOtherWorksTende: null
-      }));
-
-      setMsg({
-        type: MessageBarType.warning,
-        text: `Field "Decision Applies" had invalid value "${v}" and was cleared.`
-      });
-    }*/
+   
   }, [pmoDraft?.DecisionAppliesToOtherWorksTende]);
 
   useEffect(() => {
@@ -2560,7 +2331,7 @@ const dynamicHideFields = React.useMemo<string[]>(() => {
   if (!isSentYes) {
     console.log("protole wasn't sent yet ");
     if (base.indexOf('Addendum') === -1) base.push('Addendum');
-    if (base.indexOf(TARGET_FIELD) === -1) base.push(TARGET_FIELD);
+    //if (base.indexOf(TARGET_FIELD) === -1) base.push(TARGET_FIELD);
   }else{
     console.log("protole was sent ");
     for (let i = base.length - 1; i >= 0; i--) {
@@ -2580,6 +2351,7 @@ const dynamicHideFields = React.useMemo<string[]>(() => {
     }
 
     if (dynamicHideFields.indexOf(internal) > -1) {
+      console.log("⛑️ dynamicHideFields  -  internal ", internal);
       return false;
     }
       const sentVal = String(pmoDraft?.sentProtocol ?? '').trim();
@@ -2587,7 +2359,7 @@ const dynamicHideFields = React.useMemo<string[]>(() => {
       console.log("💛sentVal ", sentVal);
 
       // אם זה אחד השדות הרלוונטיים, והוא לא "כן" → להסתיר
-      if ((internal === 'Addendum' || internal === TARGET_FIELD) && !isSentYes) {
+      if ((internal === 'Addendum' ) && !isSentYes) {
         console.log("🏕️🏕️🏞️🏕️🏞️");
         return false;
       }
@@ -2597,12 +2369,12 @@ const dynamicHideFields = React.useMemo<string[]>(() => {
     console.log("🏕️ revInc ", revInc);
     const tenderPhaseStr = String(integrationItem?.TenderPhase || '').trim().toLowerCase();
         // האם RevisionIncludesChangeInTenderDo הוא "כן"/True
-    const revIsTrue = (() => {
+    /*const revIsTrue = (() => {
       const rv = pmoDraft?.RevisionIncludesChangeInTenderDo;
       if (typeof rv === 'boolean') return rv;
       const s = String(rv ?? '').trim().toLowerCase();
       return  s === 'yes';
-    })();
+    })();*/
 
 
 
@@ -2613,15 +2385,15 @@ const dynamicHideFields = React.useMemo<string[]>(() => {
     if (internal === 'Addendum' || internal === 'TenderCommitteeApprovalDate') {
       console.log("🤩 1 internal ", internal);
       const isNo = (revInc.toLowerCase() != 'yes');
-      if (isNo) {
+      if (isNo && isPhase2) {
         console.log("🐴🐴🐴🐴🐴 internal === 'TenderCommitteeApprovalDate' and isNo false");
         return false;
       }
 
-      if (!revIsTrue || !isPhase2) {
+      /*if (!revIsTrue || !isPhase2) {
         console.log("🐴🐴🐴🐴  isFieldVisibleNow TenderCommitteeApprovalDate");
         return false;
-      }
+      }*/
     }
 
     if (internal === 'dog') {
@@ -2667,7 +2439,24 @@ const dynamicHideFields = React.useMemo<string[]>(() => {
     console.log("🧨internal ", internal);
     if (internal === TARGET_FIELD) {
       console.log("🧨🎇 canEdit_ITDI ", canEdit_ITDI);
-      return canEdit_ITDI && canUserEditField(emailLc, internal, fieldPermMap, {
+      /*return canEdit_ITDI && canUserEditField(emailLc, internal, fieldPermMap, {
+        IntegrationTeam: roleUsers.IntegrationTeam,
+        IntegrationTeamLawyer: roleUsers.IntegrationTeamLawyer,
+        FinancialAdvisorIntegrationTeam: roleUsers.FinancialAdvisorIntegrationTeam,
+        M1TenderTeam: roleUsers.M1TenderTeam,
+        LawyerM1TenderTeam: roleUsers.LawyerM1TenderTeam,
+        M2TenderTeam: roleUsers.M2TenderTeam,
+        LawyerM2TenderTeam: roleUsers.LawyerM2TenderTeam,
+        M3TenderTeam: roleUsers.M3TenderTeam,
+        LawyerM3TenderTeam: roleUsers.LawyerM3TenderTeam,
+        FinancialAdvisor: roleUsers.FinancialAdvisor,
+        Lawyer: roleUsers.Lawyer,
+        PMOIntegrationTeam: roleUsers.PMOIntegrationTeam,
+        PMOTenderTeam: roleUsers.PMOTenderTeam
+      },
+      olm
+    );*/
+    return canUserEditField(emailLc, internal, fieldPermMap, {
         IntegrationTeam: roleUsers.IntegrationTeam,
         IntegrationTeamLawyer: roleUsers.IntegrationTeamLawyer,
         FinancialAdvisorIntegrationTeam: roleUsers.FinancialAdvisorIntegrationTeam,

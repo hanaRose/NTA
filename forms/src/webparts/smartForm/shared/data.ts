@@ -216,6 +216,7 @@ export async function savePmoItem(
     tenderPhaseStr.indexOf('phase 3') > -1;
 
   if (isPhase23) {
+    console.log("🥔isPhase23 ", isPhase23);
     delete payload.Assignedto;
     delete payload.AssignedtoId;            // אם זה People/Lookup – לפעמים נשמר כך
     delete payload['Sub_x002d_Category'];
@@ -287,7 +288,7 @@ export async function savePmoItem(
 for (const key in payload) {
   const val = payload[key];
     // ✅ תיקון ספציפי ל-MultiChoice של SubCategory
-  if ((key === "SubCategory" || key === "Sub_x002d_Category") && (val == null || (Array.isArray(val) && val.length === 0) || (typeof val === "string" && !val.trim()))) {
+  if ((key === "SubCategory" || key === "Sub_x002d_Category" ) && (val == null || (Array.isArray(val) && val.length === 0) || (typeof val === "string" && !val.trim()))) {
     delete payload[key]; // ✅ לא שולחים בכלל, כדי שלא ייכשל
     continue;
   }
