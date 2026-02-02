@@ -315,7 +315,16 @@ export function buildIntegrationPayloadFromPmo(
       }
     }
     
-    if (nv !== undefined) payload[integrationInternal] = nv;
+    if(pmoInternal != 'SubCategory'){
+      if (nv !== undefined) payload[integrationInternal] = nv;}
+    if(pmoInternal === 'SubCategory'){
+      if (nv != undefined && nv != null){ 
+        payload[integrationInternal] = nv;
+      }
+      else{
+        delete payload[integrationInternal];
+      }
+    }
   }
 
   payload['DecisionAppliesToOtherWorksTende0'] = true;
@@ -504,6 +513,11 @@ export async function splitTenderAndCreateIntegrationItems(params: {
       delete pmoClone.Created;
       delete pmoClone.Modified;
       delete pmoClone["odata.metadata"];
+      
+
+      if(itegrationItem.SubCategory === null || itegrationItem.SubCategory === undefined){
+        delete pmoClone["SubCategory"];
+      }
 
       // ✅ חריגים שביקשת:
       // Lookup ל־Integration החדש (בד"כ זה IntegrationId)

@@ -334,8 +334,18 @@ export function buildIntegrationPayloadFromPmo(integrationItem, pmoItem, pmoToIn
                 nv = normalizeForSp(integrationItem === null || integrationItem === void 0 ? void 0 : integrationItem[integrationInternal]);
             }
         }
-        if (nv !== undefined)
-            payload[integrationInternal] = nv;
+        if (pmoInternal != 'SubCategory') {
+            if (nv !== undefined)
+                payload[integrationInternal] = nv;
+        }
+        if (pmoInternal === 'SubCategory') {
+            if (nv != undefined && nv != null) {
+                payload[integrationInternal] = nv;
+            }
+            else {
+                delete payload[integrationInternal];
+            }
+        }
     }
     payload['DecisionAppliesToOtherWorksTende0'] = true;
     // תוספות/override (למשל TenderNumber לכל פריט חדש)
@@ -452,6 +462,9 @@ export function splitTenderAndCreateIntegrationItems(params) {
                     delete pmoClone.Created;
                     delete pmoClone.Modified;
                     delete pmoClone["odata.metadata"];
+                    if (itegrationItem.SubCategory === null || itegrationItem.SubCategory === undefined) {
+                        delete pmoClone["SubCategory"];
+                    }
                     // ✅ חריגים שביקשת:
                     // Lookup ל־Integration החדש (בד"כ זה IntegrationId)
                     pmoClone[pmoIntegrationLookupIdField] = createdIntegration.Id;
