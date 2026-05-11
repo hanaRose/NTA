@@ -386,61 +386,69 @@ export async function splitTenderAndCreateIntegrationItems(params: {
     pmoSentProtocolFieldInternalName = "sentProtocol",
 
   } = params;
-
   console.log("itegrationItem ", itegrationItem);
   console.log("pmoItem ", pmoItem);
   console.log("🪁 pmoItem.sentProtocol ", pmoItem.sentProtocol);
+  if(itegrationItem.coppiedFrom != null){
+    return;
+  }
+
   const raw = String(pmoItem?.[tenderSourceInternalName] ?? "").trim();
   console.log("🩰 raw ", raw);
 
   if (!raw) return;
-
+  console.log("🩰 1");
   if (raw === "Not relevant to additional tenders") {
     console.log("raw is not relevant ", raw);
     return;
   }
-
+  console.log("🩰 2");
   const worktendersList = sp.web.lists.getById(workTendersListId);
-
+  console.log("🩰 3");
   // מביאים את כל WorkTenders כדי שנוכל למפות Title -> OLM
   const tenders: Array<{ [key: string]: any }> = await worktendersList.items
     .select(workTenderTitleField, workTenderOlmField)();
-
+  console.log("🩰 4");
   console.log("tenders ", tenders);
 
   // Map לפי title (trim) כדי למצוא מהר
   const tendersByTitle = new Map<string, { [key: string]: any }>(
     tenders.map((t) => [String(t?.[workTenderTitleField] ?? "").trim(), t])
   );
-
+  console.log("🩰 5");
   // בונים את רשימת הטנדרים שנרצה ליצור עבורם פריטי Integration
   let selectedTitles: string[] = [];
-
+console.log("🩰 6");
   if (raw === "All Infra 1 tenders") {
     selectedTitles = tenders
       .map((t) => String(t?.[workTenderTitleField] ?? "").trim())
       .filter(Boolean);
+      console.log("🩰 7");
     // 2) מסננים החוצה את ה-TenderPhase של הפריט הנוכחי
     const phaseToExclude = String(itegrationItem?.TenderNumber ?? "").trim();
     console.log("phaseToExclude ", phaseToExclude);
+    console.log("🩰 8");
     selectedTitles = selectedTitles.filter((title) => title !== phaseToExclude);
+    console.log("🩰 9");
     console.log("raw === 'All Infra 1 tenders' -> selectedTitles ", selectedTitles);
   } else {
+    console.log("🩰 10");
     selectedTitles = raw
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean);
-
+    console.log("🩰 11");
     console.log("raw != 'All Infra 1 tenders' -> selectedTitles ", selectedTitles);
   }
 
   if (selectedTitles.length === 0) return;
-
+  console.log("🩰 12");
   const list = sp.web.lists.getById(integrationListId);
+  console.log("🩰 13");
   // 🆕 PMO Decisions list (אם הועבר ID)
   const pmoList = pmoDecisionsListId ? sp.web.lists.getById(pmoDecisionsListId) : null;
 
-
+console.log("🩰 14");
   // יוצרים פריט חדש ב-Integration עבור כל title שנבחר
   for (const tenderTitle of selectedTitles) {
     console.log("💒tenderTitle- ", tenderTitle, "  itegrationItem.TenderNumber -", itegrationItem.TenderNumber);
@@ -466,6 +474,10 @@ export async function splitTenderAndCreateIntegrationItems(params: {
 
 
     // ✅ אם מצאנו OLM ב-WorkTenders – נשפוך אותו ל-Integration
+    if (itegrationItem.Category === null || itegrationItem.Category === undefined) {
+      extra["Category"] = [];
+    }
+
     if (olmFromWorkTender !== undefined && olmFromWorkTender !== null) {
       extra[integrationOlmField] = olmFromWorkTender;
     }
@@ -519,6 +531,11 @@ export async function splitTenderAndCreateIntegrationItems(params: {
         delete pmoClone["SubCategory"];
       }
 
+      if(itegrationItem.Category === null || itegrationItem.Category === undefined){
+        delete pmoClone["Category"];
+      }
+
+
       // ✅ חריגים שביקשת:
       // Lookup ל־Integration החדש (בד"כ זה IntegrationId)
       pmoClone[pmoIntegrationLookupIdField] = createdIntegration.Id;
@@ -552,6 +569,7 @@ export type FieldInfoLike = {
   ReadOnlyField?: boolean;
   Sealed?: boolean;
 };
+
 
 function splitCommaList(raw: string): string[] {
   return raw
@@ -621,7 +639,7 @@ function coerceValueForSp(typeAsString: string, val: any) {
   // URL/Hyperlink כבר את מנרמלת לפני save; אם לא - נשאיר כמו שהוא
   return val;
 }
-
+/////////////////////////////////////////////////////////////////////////////////
 function buildMergedClonePayload(
   primary: any,
   secondary: any,
@@ -949,7 +967,7 @@ const FormApp: React.FC<FormAppProps> = ({
   // placeholder לשדות ספציפיים כשיש Accept
   const placeholders = React.useMemo<Partial<Record<string, string>>>(() => {
     const decision = String(pmoDraft?.DecisionRegardingProposedChange || '').trim();
-    if (decision === 'Accept') {
+    if (decision === 'Accept'|| decision ==='Partially accepted') {
       const msg = 'Enter final wording for publication here';
       return {
         RevisedWordingFinalForPublicatio: msg,
@@ -1030,11 +1048,12 @@ const FormApp: React.FC<FormAppProps> = ({
 
   const TENDER_TEAM_FIELDS: string[] = [
   "StatusOfRFCresponseOrTcRFC",//
-  "TenderCommitteeApprovalDate",//
-  "Addendum",//
-  "RFCresponseAsPublishedToBeFilled",//
   "RFCorTcRFCasPublishedByNTaToBeFi",//
+  "RFCresponseAsPublishedToBeFilled",//
+  "Addendum",//
+  "addendumDate",
   "RFCResponseLetterNo",//
+  "TenderCommitteeApprovalDate",//
   "RevisedWordingFinalForPublicatio",//
   "IntegrationTeamDecisionImplement",//
   'DueDateCalculated',
@@ -1054,6 +1073,7 @@ const PMO_LABEL_OVERRIDES: Record<string, string> = {
   RFCResponseLetterNo:'RFC response Letter no.',
   RFCresponseAsPublishedToBeFilled:'RFC response as published  (To be filled in after publication)',
   Addendum:'Addendum #',
+  addendumDate:'Addendum Date',
   TenderCommitteeApprovalDate:'Tender Committee Approval Date',
   StatusOfRFCresponseOrTcRFC:'Status Of RFC response Or Tc RFC',
   DecisionDate:'Decision Date',
@@ -1097,6 +1117,7 @@ const PMO_TO_INTEGRATION_FIELD_MAP: Record<string, string> = {
   RFCResponseLetterNo: 'RFCresponseLetterno',
   RFCresponseAsPublishedToBeFilled: 'RFCresponseaspublished',
   Addendum: 'Addendum',
+  addendumDate: 'addendumDate',
   TenderCommitteeApprovalDate: 'TenderCommitteeapprovaldate',
   StatusOfRFCresponseOrTcRFC: 'StatusofRFCresponse_x002f_TCRFC',
   DecisionDate: 'Decisiondate',
@@ -1152,7 +1173,7 @@ async function syncPmoToIntegration(
 }
 
 
-
+////////////////////////////////////////////////////////////////////////////////////
   const filteredIntegrationChoices: IComboBoxOption[] = useMemo(() => {
     console.log("🦝🦝🦝🦝🦝🦝🦝🦝 filteredIntegrationChoices")
     //const q = integrationSearch.trim().toLowerCase();
@@ -1510,7 +1531,7 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
     console.log("15🔮");
     //const fieldMap = await getFieldInfoMap(sp, pmoListTitle);
     const fieldMap = await getFieldInfoMapById(sp, PMO_LIST_ID);
-    console.log("16🔮");
+    console.log("16🔮 fieldMap ", fieldMap);
     setPmoFieldInfoMap(fieldMap);
     console.log("17🔮");
     // steps → internal
@@ -1740,7 +1761,7 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
   const onSave = async (options?: { updateEditingDate?: boolean }) => {
     
 
-    console.log("🐴🐴🐴 in onsave ");
+    console.log("🐴🐴🐴 in onsave pmoItem ", pmoItem);
     
     if (!pmoItem || !pmoItem.Id) return;
     // ---- ולידציית שדות חובה לפני השמירה ----
@@ -1773,7 +1794,7 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
       
 
       if(flage === true){
-         if(internal === "Addendum"){
+         if(internal === "Addendum" || internal === "addendumDate" ){
           continue;
         }
         if(internal === "RFCResponseLetterNo"){
@@ -1964,7 +1985,7 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
   const onSplitTenderClick = async () => {
   try {
     setIsSplitting(true);
-
+    
     await splitTenderAndCreateIntegrationItems({
       sp,
       integrationListId: "2c962132-409d-4bf2-9440-3b3b6c7975a0",
@@ -1976,8 +1997,12 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
       linkFieldInternalName: "NTA_x2019_s_x0020_reference",
       linkValue: pmoDraft?.IntegrationId,
     });
-
-    setMsg?.({ type: MessageBarType.success, text: "Split tender completed." });
+    if(integrationItem.coppiedFrom != null){
+      setMsg?.({ type: MessageBarType.error, text: "Not allowed to split splitted items." });
+    }else{
+      setMsg?.({ type: MessageBarType.success, text: "Split tender completed." });
+    }
+    
   } catch (e: any) {
     console.error("splitTenderAndCreateIntegrationItems failed", e);
     setMsg?.({ type: MessageBarType.error, text: e?.message || "Split tender failed." });
@@ -2021,7 +2046,7 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
         console.log("🛹 is system");
         return false;}
 
-      if (k === 'Id' || k === 'ID' || k === 'Title'|| k === 'formCreator'|| k === 'LM_x2019_sreference'|| k === 'DocumentName' || k === 'DocumentReference'|| k === 'SectionName') return false;
+      if (k === 'Id' || k === 'ID' || k === 'Title'|| k === 'formCreator'|| k === 'LM_x2019_sreference'||  k === 'DocumentReference'|| k === 'SectionName') return false;//k === 'DocumentName' ||
       const info = integrationFieldInfoMap[k];
       
       if (info && info.Hidden === true) {
@@ -2030,6 +2055,7 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
       return true;
     });
  
+
     return (
       <Stack tokens={{ childrenGap: 10 }}>
         {keys.map(k => {
@@ -2234,11 +2260,11 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
 
 
     // 2. לוגיקה של RevisionIncludesChangeInTenderDo
-    const rv = pmoDraft?.RevisionIncludesChangeInTenderDo;
+    const rv = pmoDraft?.RevisionIncludesChangeInTenderDo;//YES
     const isYes = (() => {
       if (typeof rv === 'boolean') return rv;
       const s = String(rv ?? '').trim().toLowerCase();
-      return s === 'yes';
+      return s === 'yes';//true
     })();
 
     if (!isYes) base.push('RFCResponseLetterNo');
@@ -2256,12 +2282,13 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
    
     if (!isSentYes) {
       if (base.indexOf('Addendum') === -1) base.push('Addendum');
+      if (base.indexOf('addendumDate') === -1) base.push('addendumDate');
       console.log("PRTCOL WAS NOT SENT🏕️🏕️🏞️🏕️🏞️");
 
-      //if (base.indexOf(TARGET_FIELD) === -1) base.push(TARGET_FIELD);
     }else{
       for (let i = base.length - 1; i >= 0; i--) {
         if (base[i] === 'Addendum') base.splice(i, 1);
+        if (base[i] === 'addendumDate') base.splice(i, 1);
       }
       console.log("PRTCOL WAS SENT🏕️🏕️🏞️🏕️🏞️");
     }
@@ -2345,11 +2372,13 @@ const dynamicHideFields = React.useMemo<string[]>(() => {
   if (!isSentYes) {
     console.log("protole wasn't sent yet ");
     if (base.indexOf('Addendum') === -1) base.push('Addendum');
+    if (base.indexOf('addendumDate') === -1) base.push('addendumDate');
     //if (base.indexOf(TARGET_FIELD) === -1) base.push(TARGET_FIELD);
   }else{
     console.log("protole was sent ");
     for (let i = base.length - 1; i >= 0; i--) {
       if (base[i] === 'Addendum') base.splice(i, 1);
+      if (base[i] === 'addendumDate') base.splice(i, 1);
     }
     console.log("base ", base);
   }
@@ -2373,7 +2402,7 @@ const dynamicHideFields = React.useMemo<string[]>(() => {
       console.log("💛sentVal ", sentVal);
 
       // אם זה אחד השדות הרלוונטיים, והוא לא "כן" → להסתיר
-      if ((internal === 'Addendum' ) && !isSentYes) {
+      if ((internal === 'Addendum' || internal === 'addendumDate') && !isSentYes) {
         console.log("🏕️🏕️🏞️🏕️🏞️");
         return false;
       }
@@ -2393,10 +2422,10 @@ const dynamicHideFields = React.useMemo<string[]>(() => {
 
 
     if (internal === 'RFCresponseAsPublishedToBeFilled' || internal === 'StatusOfRFCresponseOrTcRFC') {
-      if (decision !== 'Accept') return false;
+      if (decision !== 'Accept' && decision !== 'Partially accepted') return false;
     }
 
-    if (internal === 'Addendum' || internal === 'TenderCommitteeApprovalDate') {
+    if (internal === 'Addendum' || internal === 'addendumDate' || internal === 'TenderCommitteeApprovalDate') {
       console.log("🤩 1 internal ", internal);
       const isNo = (revInc.toLowerCase() != 'yes');
       if (isNo && isPhase2) {
@@ -2528,7 +2557,7 @@ const dynamicHideFields = React.useMemo<string[]>(() => {
           ? viewFieldOrder
           : Object.keys(pmoDraft || {});
 
-      const order = rawOrder.filter((k) => k !== "Addendum");
+      const order = rawOrder.filter((k) => (k !== "Addendum" && k !== "addendumDate" ));
       console.log("🧤1");
       return (
         <EditableFields
@@ -2767,7 +2796,11 @@ console.log("🍓🍋🍇🍋‍🟩tenderTeamHideFields", tenderTeamHideFields)
               }}
 
               styles={{
-                root: { minWidth: 540 },
+                root: {
+                  width: "100%",
+                  maxWidth: 540,
+                  minWidth: 0,
+                },
                 label: { fontWeight: 600 },
               }}
             />

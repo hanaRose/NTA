@@ -244,7 +244,7 @@ const EditableFields: React.FC<Props> = ({
           if (tenderPhaseStr.indexOf('phase 1') > -1) {
             return null;
           }
-          if(decision === 'Accept'){
+          if(decision === 'Accept' || decision === 'Partially accepted'){
             placeholder = 'Enter final version for publication here';
           }
           
@@ -285,12 +285,12 @@ const EditableFields: React.FC<Props> = ({
         if (internal === 'RFCresponseAsPublishedToBeFilled') {
           const decision = String(item?.DecisionRegardingProposedChange || '').trim();
           console.log('🍩decision ', decision);
-          if (decision !== 'Accept') {
+          if (decision !== 'Accept' && decision !== 'Partially accepted') {
             return null;
           }
         }
 
-        if (internal === 'Addendum') {
+        if (internal === 'Addendum' || internal === 'addendumDate' ) {
           const decision = String(item?.RevisionIncludesChangeInTenderDo || '').trim().toLowerCase();
           console.log('🍩🤪decision ', decision, '\n 🫷🏻item?.RevisionIncludesChangeInTenderDo', item?.RevisionIncludesChangeInTenderDo);
           if ((tenderPhaseStr.indexOf('phase 2') > -1 && decision != 'yes') || tenderPhaseStr.indexOf('phase 1') > -1) {
@@ -320,14 +320,14 @@ const EditableFields: React.FC<Props> = ({
         if (internal === 'StatusOfRFCresponseOrTcRFC') {
           const decision = String(item?.DecisionRegardingProposedChange || '').trim();
           
-          if (decision !== 'Accept') {
+          if (decision !== 'Accept' && decision !== 'Partially accepted') {
             console.log('🍩🧋decision', decision);
             return null;
           }
          
         }
 
-        if(internal === "StatusOfRFCresponseOrTcRFC" || internal === "TenderCommitteeApprovalDate" || internal === "Addendum"){
+        if(internal === "StatusOfRFCresponseOrTcRFC" || internal === "TenderCommitteeApprovalDate" || internal === "Addendum" || internal === "addendumDate" ){
           console.log("🤩 2");
           if (tenderPhaseStr == 'phase 1 - bidders’ requests for clarifications (rfcs) of tender documents' || tenderPhaseStr.indexOf('phase 1') != -1) {
             console.log(

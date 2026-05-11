@@ -371,42 +371,59 @@ export function splitTenderAndCreateIntegrationItems(params) {
                     console.log("itegrationItem ", itegrationItem);
                     console.log("pmoItem ", pmoItem);
                     console.log("🪁 pmoItem.sentProtocol ", pmoItem.sentProtocol);
+                    if (itegrationItem.coppiedFrom != null) {
+                        return [2 /*return*/];
+                    }
                     raw = String((_a = pmoItem === null || pmoItem === void 0 ? void 0 : pmoItem[tenderSourceInternalName]) !== null && _a !== void 0 ? _a : "").trim();
                     console.log("🩰 raw ", raw);
                     if (!raw)
                         return [2 /*return*/];
+                    console.log("🩰 1");
                     if (raw === "Not relevant to additional tenders") {
                         console.log("raw is not relevant ", raw);
                         return [2 /*return*/];
                     }
+                    console.log("🩰 2");
                     worktendersList = sp.web.lists.getById(workTendersListId);
+                    console.log("🩰 3");
                     return [4 /*yield*/, worktendersList.items
                             .select(workTenderTitleField, workTenderOlmField)()];
                 case 1:
                     tenders = _o.sent();
+                    console.log("🩰 4");
                     console.log("tenders ", tenders);
                     tendersByTitle = new Map(tenders.map(function (t) { var _a; return [String((_a = t === null || t === void 0 ? void 0 : t[workTenderTitleField]) !== null && _a !== void 0 ? _a : "").trim(), t]; }));
+                    console.log("🩰 5");
                     selectedTitles = [];
+                    console.log("🩰 6");
                     if (raw === "All Infra 1 tenders") {
                         selectedTitles = tenders
                             .map(function (t) { var _a; return String((_a = t === null || t === void 0 ? void 0 : t[workTenderTitleField]) !== null && _a !== void 0 ? _a : "").trim(); })
                             .filter(Boolean);
+                        console.log("🩰 7");
                         phaseToExclude_1 = String((_b = itegrationItem === null || itegrationItem === void 0 ? void 0 : itegrationItem.TenderNumber) !== null && _b !== void 0 ? _b : "").trim();
                         console.log("phaseToExclude ", phaseToExclude_1);
+                        console.log("🩰 8");
                         selectedTitles = selectedTitles.filter(function (title) { return title !== phaseToExclude_1; });
+                        console.log("🩰 9");
                         console.log("raw === 'All Infra 1 tenders' -> selectedTitles ", selectedTitles);
                     }
                     else {
+                        console.log("🩰 10");
                         selectedTitles = raw
                             .split(",")
                             .map(function (s) { return s.trim(); })
                             .filter(Boolean);
+                        console.log("🩰 11");
                         console.log("raw != 'All Infra 1 tenders' -> selectedTitles ", selectedTitles);
                     }
                     if (selectedTitles.length === 0)
                         return [2 /*return*/];
+                    console.log("🩰 12");
                     list = sp.web.lists.getById(integrationListId);
+                    console.log("🩰 13");
                     pmoList = pmoDecisionsListId ? sp.web.lists.getById(pmoDecisionsListId) : null;
+                    console.log("🩰 14");
                     _i = 0, selectedTitles_1 = selectedTitles;
                     _o.label = 2;
                 case 2:
@@ -429,6 +446,9 @@ export function splitTenderAndCreateIntegrationItems(params) {
                     extra["coppiedFrom"] = String(itegrationItem.NTA_x2019_s_x0020_reference);
                     extra["LM_x2019_sreference"] = String(itegrationItem.NTA_x2019_s_x0020_reference);
                     // ✅ אם מצאנו OLM ב-WorkTenders – נשפוך אותו ל-Integration
+                    if (itegrationItem.Category === null || itegrationItem.Category === undefined) {
+                        extra["Category"] = [];
+                    }
                     if (olmFromWorkTender !== undefined && olmFromWorkTender !== null) {
                         extra[integrationOlmField] = olmFromWorkTender;
                     }
@@ -464,6 +484,9 @@ export function splitTenderAndCreateIntegrationItems(params) {
                     delete pmoClone["odata.metadata"];
                     if (itegrationItem.SubCategory === null || itegrationItem.SubCategory === undefined) {
                         delete pmoClone["SubCategory"];
+                    }
+                    if (itegrationItem.Category === null || itegrationItem.Category === undefined) {
+                        delete pmoClone["Category"];
                     }
                     // ✅ חריגים שביקשת:
                     // Lookup ל־Integration החדש (בד"כ זה IntegrationId)
@@ -554,6 +577,7 @@ function coerceValueForSp(typeAsString, val) {
     // URL/Hyperlink כבר את מנרמלת לפני save; אם לא - נשאיר כמו שהוא
     return val;
 }
+/////////////////////////////////////////////////////////////////////////////////
 function buildMergedClonePayload(primary, secondary, fieldInfoMap, overrides) {
     var payload = {};
     for (var _i = 0, _a = Object.keys(fieldInfoMap); _i < _a.length; _i++) {
@@ -890,7 +914,7 @@ var FormApp = function (_a) {
     // placeholder לשדות ספציפיים כשיש Accept
     var placeholders = React.useMemo(function () {
         var decision = String((pmoDraft === null || pmoDraft === void 0 ? void 0 : pmoDraft.DecisionRegardingProposedChange) || '').trim();
-        if (decision === 'Accept') {
+        if (decision === 'Accept' || decision === 'Partially accepted') {
             var msg_1 = 'Enter final wording for publication here';
             return {
                 RevisedWordingFinalForPublicatio: msg_1,
@@ -940,11 +964,12 @@ var FormApp = function (_a) {
     ];
     var TENDER_TEAM_FIELDS = [
         "StatusOfRFCresponseOrTcRFC", //
-        "TenderCommitteeApprovalDate", //
-        "Addendum", //
-        "RFCresponseAsPublishedToBeFilled", //
         "RFCorTcRFCasPublishedByNTaToBeFi", //
+        "RFCresponseAsPublishedToBeFilled", //
+        "Addendum", //
+        "addendumDate",
         "RFCResponseLetterNo", //
+        "TenderCommitteeApprovalDate", //
         "RevisedWordingFinalForPublicatio", //
         "IntegrationTeamDecisionImplement", //
         'DueDateCalculated',
@@ -963,6 +988,7 @@ var FormApp = function (_a) {
         RFCResponseLetterNo: 'RFC response Letter no.',
         RFCresponseAsPublishedToBeFilled: 'RFC response as published  (To be filled in after publication)',
         Addendum: 'Addendum #',
+        addendumDate: 'Addendum Date',
         TenderCommitteeApprovalDate: 'Tender Committee Approval Date',
         StatusOfRFCresponseOrTcRFC: 'Status Of RFC response Or Tc RFC',
         DecisionDate: 'Decision Date',
@@ -1001,6 +1027,7 @@ var FormApp = function (_a) {
         RFCResponseLetterNo: 'RFCresponseLetterno',
         RFCresponseAsPublishedToBeFilled: 'RFCresponseaspublished',
         Addendum: 'Addendum',
+        addendumDate: 'addendumDate',
         TenderCommitteeApprovalDate: 'TenderCommitteeapprovaldate',
         StatusOfRFCresponseOrTcRFC: 'StatusofRFCresponse_x002f_TCRFC',
         DecisionDate: 'Decisiondate',
@@ -1053,6 +1080,7 @@ var FormApp = function (_a) {
             });
         });
     }
+    ////////////////////////////////////////////////////////////////////////////////////
     var filteredIntegrationChoices = useMemo(function () {
         console.log("🦝🦝🦝🦝🦝🦝🦝🦝 filteredIntegrationChoices");
         //const q = integrationSearch.trim().toLowerCase();
@@ -1417,7 +1445,7 @@ var FormApp = function (_a) {
                     return [4 /*yield*/, getFieldInfoMapById(sp, PMO_LIST_ID)];
                 case 7:
                     fieldMap = _c.sent();
-                    console.log("16🔮");
+                    console.log("16🔮 fieldMap ", fieldMap);
                     setPmoFieldInfoMap(fieldMap);
                     console.log("17🔮");
                     normalized = normalizeStepsConfigToInternal(stepsConfig, pmoMaps.titleToInternal);
@@ -1684,7 +1712,7 @@ var FormApp = function (_a) {
         return __generator(this, function (_c) {
             switch (_c.label) {
                 case 0:
-                    console.log("🐴🐴🐴 in onsave ");
+                    console.log("🐴🐴🐴 in onsave pmoItem ", pmoItem);
                     if (!pmoItem || !pmoItem.Id)
                         return [2 /*return*/];
                     newErrors = {};
@@ -1707,7 +1735,7 @@ var FormApp = function (_a) {
                             }
                         }
                         if (flage === true) {
-                            if (internal === "Addendum") {
+                            if (internal === "Addendum" || internal === "addendumDate") {
                                 continue;
                             }
                             if (internal === "RFCResponseLetterNo") {
@@ -1890,7 +1918,12 @@ var FormApp = function (_a) {
                         })];
                 case 1:
                     _a.sent();
-                    setMsg === null || setMsg === void 0 ? void 0 : setMsg({ type: MessageBarType.success, text: "Split tender completed." });
+                    if (integrationItem.coppiedFrom != null) {
+                        setMsg === null || setMsg === void 0 ? void 0 : setMsg({ type: MessageBarType.error, text: "Not allowed to split splitted items." });
+                    }
+                    else {
+                        setMsg === null || setMsg === void 0 ? void 0 : setMsg({ type: MessageBarType.success, text: "Split tender completed." });
+                    }
                     return [3 /*break*/, 4];
                 case 2:
                     e_7 = _a.sent();
@@ -1931,8 +1964,8 @@ var FormApp = function (_a) {
                 console.log("🛹 is system");
                 return false;
             }
-            if (k === 'Id' || k === 'ID' || k === 'Title' || k === 'formCreator' || k === 'LM_x2019_sreference' || k === 'DocumentName' || k === 'DocumentReference' || k === 'SectionName')
-                return false;
+            if (k === 'Id' || k === 'ID' || k === 'Title' || k === 'formCreator' || k === 'LM_x2019_sreference' || k === 'DocumentReference' || k === 'SectionName')
+                return false; //k === 'DocumentName' ||
             var info = integrationFieldInfoMap[k];
             if (info && info.Hidden === true) {
                 console.log("🙈k info.Hidden === true ");
@@ -2111,12 +2144,12 @@ var FormApp = function (_a) {
         }
         console.log("🏞️ base ", base);
         // 2. לוגיקה של RevisionIncludesChangeInTenderDo
-        var rv = pmoDraft === null || pmoDraft === void 0 ? void 0 : pmoDraft.RevisionIncludesChangeInTenderDo;
+        var rv = pmoDraft === null || pmoDraft === void 0 ? void 0 : pmoDraft.RevisionIncludesChangeInTenderDo; //YES
         var isYes = (function () {
             if (typeof rv === 'boolean')
                 return rv;
             var s = String(rv !== null && rv !== void 0 ? rv : '').trim().toLowerCase();
-            return s === 'yes';
+            return s === 'yes'; //true
         })();
         if (!isYes)
             base.push('RFCResponseLetterNo');
@@ -2132,12 +2165,15 @@ var FormApp = function (_a) {
         if (!isSentYes) {
             if (base.indexOf('Addendum') === -1)
                 base.push('Addendum');
+            if (base.indexOf('addendumDate') === -1)
+                base.push('addendumDate');
             console.log("PRTCOL WAS NOT SENT🏕️🏕️🏞️🏕️🏞️");
-            //if (base.indexOf(TARGET_FIELD) === -1) base.push(TARGET_FIELD);
         }
         else {
             for (var i = base.length - 1; i >= 0; i--) {
                 if (base[i] === 'Addendum')
+                    base.splice(i, 1);
+                if (base[i] === 'addendumDate')
                     base.splice(i, 1);
             }
             console.log("PRTCOL WAS SENT🏕️🏕️🏞️🏕️🏞️");
@@ -2205,12 +2241,16 @@ var FormApp = function (_a) {
             console.log("protole wasn't sent yet ");
             if (base.indexOf('Addendum') === -1)
                 base.push('Addendum');
+            if (base.indexOf('addendumDate') === -1)
+                base.push('addendumDate');
             //if (base.indexOf(TARGET_FIELD) === -1) base.push(TARGET_FIELD);
         }
         else {
             console.log("protole was sent ");
             for (var i = base.length - 1; i >= 0; i--) {
                 if (base[i] === 'Addendum')
+                    base.splice(i, 1);
+                if (base[i] === 'addendumDate')
                     base.splice(i, 1);
             }
             console.log("base ", base);
@@ -2230,7 +2270,7 @@ var FormApp = function (_a) {
         var isSentYes = (sentVal === 'true');
         console.log("💛sentVal ", sentVal);
         // אם זה אחד השדות הרלוונטיים, והוא לא "כן" → להסתיר
-        if ((internal === 'Addendum') && !isSentYes) {
+        if ((internal === 'Addendum' || internal === 'addendumDate') && !isSentYes) {
             console.log("🏕️🏕️🏞️🏕️🏞️");
             return false;
         }
@@ -2246,10 +2286,10 @@ var FormApp = function (_a) {
           return  s === 'yes';
         })();*/
         if (internal === 'RFCresponseAsPublishedToBeFilled' || internal === 'StatusOfRFCresponseOrTcRFC') {
-            if (decision !== 'Accept')
+            if (decision !== 'Accept' && decision !== 'Partially accepted')
                 return false;
         }
-        if (internal === 'Addendum' || internal === 'TenderCommitteeApprovalDate') {
+        if (internal === 'Addendum' || internal === 'addendumDate' || internal === 'TenderCommitteeApprovalDate') {
             console.log("🤩 1 internal ", internal);
             var isNo = (revInc.toLowerCase() != 'yes');
             if (isNo && isPhase2) {
@@ -2357,7 +2397,7 @@ var FormApp = function (_a) {
             var rawOrder = viewFieldOrder && viewFieldOrder.length
                 ? viewFieldOrder
                 : Object.keys(pmoDraft || {});
-            var order = rawOrder.filter(function (k) { return k !== "Addendum"; });
+            var order = rawOrder.filter(function (k) { return (k !== "Addendum" && k !== "addendumDate"); });
             console.log("🧤1");
             return (React.createElement(EditableFields, { item: pmoDraft, onChange: onChangeField, fieldOrder: order, hideFields: dynamicHideFields, internalToTitle: pmoLabels, fieldInfoMap: pmoFieldInfoMap, canEdit: canEditField, placeholderMap: placeholders, choiceOverrides: (_a = {},
                     _a[TARGET_FIELD] = itdiOptions,
@@ -2484,7 +2524,11 @@ var FormApp = function (_a) {
                                 var exact = integrationChoices.find(function (o) { var _a; return String((_a = o.text) !== null && _a !== void 0 ? _a : "").trim().toLowerCase() === tt; });
                                 setIntegrationId(exact ? exact.key : null);
                             }, styles: {
-                                root: { minWidth: 540 },
+                                root: {
+                                    width: "100%",
+                                    maxWidth: 540,
+                                    minWidth: 0,
+                                },
                                 label: { fontWeight: 600 },
                             } })),
                     React.createElement(DefaultButton, { text: "Refresh list", onClick: loadIntegrationChoices, disabled: busy, styles: {
