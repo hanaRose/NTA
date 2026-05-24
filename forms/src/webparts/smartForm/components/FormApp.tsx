@@ -1109,6 +1109,7 @@ const PMO_LABEL_OVERRIDES: Record<string, string> = {
 // 🟢 תעדכני כאן את כל השדות שאת רוצה לסנכרן.
 const PMO_TO_INTEGRATION_FIELD_MAP: Record<string, string> = {
   // PMO internal name      : INTEGRATION internal name
+  INTEGRATIONTEAMSTATUS:'INTEGRATIONTEAMSTATUS',
   DecisionRegardingProposedChange: 'DecisionRegardingProposedChange',
   DecisionRegardingProposedChangeC: 'DecisionRegardingProposedChange_',
   DecisionAppliesToOtherWorksTende: 'DecisionappliestootherWorksTende',
@@ -1926,7 +1927,7 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
             //await syncPmoToIntegration(sp, integrationId, draftToSave);
             console.log("🍕 draftToSave ", draftToSave);
             await syncPmoToIntegration(sp,  draftToSave.IntegrationId, draftToSave);
-            console.log('✅ Synced PMO → INTEGRATION for item', integrationId);
+            console.log('✅ Synced PMO → INTEGRATION for item', integrationId, "draftToSave \n", draftToSave);
           } else {
             console.warn('syncPmoToIntegration: integrationId is null – no sync done');
           }
@@ -1938,6 +1939,7 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
 
         // ✅ בסוף onSave:
         if (options?.updateEditingDate === true) {
+          console.log("updateEditingDate is true ");
           // 1) Update PMO Decision: INTEGRATIONTEAMSTATUS + sentProtocol=true
           const pmoList = sp.web.lists.getById(PMO_LIST_ID);
 

@@ -1019,6 +1019,7 @@ var FormApp = function (_a) {
     // 🟢 תעדכני כאן את כל השדות שאת רוצה לסנכרן.
     var PMO_TO_INTEGRATION_FIELD_MAP = {
         // PMO internal name      : INTEGRATION internal name
+        INTEGRATIONTEAMSTATUS: 'INTEGRATIONTEAMSTATUS',
         DecisionRegardingProposedChange: 'DecisionRegardingProposedChange',
         DecisionRegardingProposedChangeC: 'DecisionRegardingProposedChange_',
         DecisionAppliesToOtherWorksTende: 'DecisionappliestootherWorksTende',
@@ -1846,7 +1847,7 @@ var FormApp = function (_a) {
                     return [4 /*yield*/, syncPmoToIntegration(sp, draftToSave.IntegrationId, draftToSave)];
                 case 4:
                     _c.sent();
-                    console.log('✅ Synced PMO → INTEGRATION for item', integrationId);
+                    console.log('✅ Synced PMO → INTEGRATION for item', integrationId, "draftToSave \n", draftToSave);
                     return [3 /*break*/, 6];
                 case 5:
                     console.warn('syncPmoToIntegration: integrationId is null – no sync done');
@@ -1858,6 +1859,7 @@ var FormApp = function (_a) {
                     return [3 /*break*/, 8];
                 case 8:
                     if (!((options === null || options === void 0 ? void 0 : options.updateEditingDate) === true)) return [3 /*break*/, 13];
+                    console.log("updateEditingDate is true ");
                     pmoList = sp.web.lists.getById(PMO_LIST_ID);
                     return [4 /*yield*/, pmoList.items.getById(pmoItem.Id).update((_a = {},
                             _a[INTEGRATION_TEAM_STATUS_FIELD] = STATUS_DECISION_REACHED,
