@@ -1349,7 +1349,7 @@ var FormApp = function (_a) {
         var _a;
         var v = String((_a = pmoDraft === null || pmoDraft === void 0 ? void 0 : pmoDraft.RevisionIncludesChangeInTenderDo) !== null && _a !== void 0 ? _a : '').trim().toUpperCase();
         console.log("🎀[pmoDraft?.RevisionIncludesChangeInTenderDo]  -  v ", v);
-        return v === 'YES';
+        return true; //v === 'YES' ;
     }, [pmoDraft === null || pmoDraft === void 0 ? void 0 : pmoDraft.RevisionIncludesChangeInTenderDo]);
     React.useEffect(function () {
         console.log("🎍 in use effect trying to find your OLM");
@@ -1708,10 +1708,11 @@ var FormApp = function (_a) {
         }
     }
     var onSave = function (options) { return __awaiter(void 0, void 0, void 0, function () {
-        var newErrors, flage, i, internal, v, isEmpty, info, t, urlToCheck, draftToSave, internal, info, t, val, urlStr, saved, syncErr_1, pmoList, integrationList, updatedPmoItem, e_6;
+        var newErrors, flage, i, internal, v, tenderPhaseStr, isPhase2_1, isEmpty, info, t, urlToCheck, draftToSave, internal, info, t, val, urlStr, saved, syncErr_1, pmoList, integrationList, updatedPmoItem, e_6;
         var _a, _b;
-        return __generator(this, function (_c) {
-            switch (_c.label) {
+        var _c;
+        return __generator(this, function (_d) {
+            switch (_d.label) {
                 case 0:
                     console.log("🐴🐴🐴 in onsave pmoItem ", pmoItem);
                     if (!pmoItem || !pmoItem.Id)
@@ -1729,13 +1730,17 @@ var FormApp = function (_a) {
                             continue;
                         }
                         v = pmoDraft ? pmoDraft[internal] : undefined;
+                        tenderPhaseStr = String((_c = pmoDraft === null || pmoDraft === void 0 ? void 0 : pmoDraft.TenderPhase) !== null && _c !== void 0 ? _c : '').trim().toLowerCase();
+                        isPhase2_1 = tenderPhaseStr.indexOf('phase 2') !== -1;
                         if (internal === "RFCresponseAsPublishedToBeFilled") {
-                            console.log("RFCresponseAsPublishedToBeFilled v ", v);
-                            if (v === false) {
+                            console.log("⚓ 2 RFCresponseAsPublishedToBeFilled");
+                            if (v === false && !isPhase2_1) {
+                                console.log("❌");
                                 flage = true;
                             }
                         }
                         if (flage === true) {
+                            console.log("flage is TRUE 🏳️‍🌈", flage);
                             if (internal === "Addendum" || internal === "addendumDate") {
                                 continue;
                             }
@@ -1787,9 +1792,9 @@ var FormApp = function (_a) {
                         });
                         return [2 /*return*/]; // לא ממשיכים לשמירה ב־SharePoint
                     }
-                    _c.label = 1;
+                    _d.label = 1;
                 case 1:
-                    _c.trys.push([1, 14, 15, 16]);
+                    _d.trys.push([1, 14, 15, 16]);
                     setBusy(true);
                     draftToSave = __assign({}, (pmoDraft || {}));
                     if (options === null || options === void 0 ? void 0 : options.updateEditingDate) {
@@ -1829,7 +1834,7 @@ var FormApp = function (_a) {
                     console.log('🧾 draftToSave before save:', draftToSave);
                     return [4 /*yield*/, savePmoItem(sp, PMO_LIST_ID, pmoItem.Id, draftToSave)];
                 case 2:
-                    saved = _c.sent();
+                    saved = _d.sent();
                     console.log("🍕 saved ", saved);
                     setPmoItem(saved);
                     setPmoDraft(saved);
@@ -1837,24 +1842,24 @@ var FormApp = function (_a) {
                     setValidationErrors({});
                     // ---- אם אין שגיאות חובה, ממשיכים לשמור ----
                     console.log("🦘saved ", saved);
-                    _c.label = 3;
+                    _d.label = 3;
                 case 3:
-                    _c.trys.push([3, 7, , 8]);
+                    _d.trys.push([3, 7, , 8]);
                     draftToSave.DueDateCalculated = saved.DueDateCalculated;
                     if (!draftToSave.IntegrationId) return [3 /*break*/, 5];
                     //await syncPmoToIntegration(sp, integrationId, draftToSave);
                     console.log("🍕 draftToSave ", draftToSave);
                     return [4 /*yield*/, syncPmoToIntegration(sp, draftToSave.IntegrationId, draftToSave)];
                 case 4:
-                    _c.sent();
+                    _d.sent();
                     console.log('✅ Synced PMO → INTEGRATION for item', integrationId, "draftToSave \n", draftToSave);
                     return [3 /*break*/, 6];
                 case 5:
                     console.warn('syncPmoToIntegration: integrationId is null – no sync done');
-                    _c.label = 6;
+                    _d.label = 6;
                 case 6: return [3 /*break*/, 8];
                 case 7:
-                    syncErr_1 = _c.sent();
+                    syncErr_1 = _d.sent();
                     console.error('❌ Failed to sync PMO → INTEGRATION', syncErr_1);
                     return [3 /*break*/, 8];
                 case 8:
@@ -1866,18 +1871,18 @@ var FormApp = function (_a) {
                             _a[PMO_SENT_PROTOCOL_FIELD] = true,
                             _a))];
                 case 9:
-                    _c.sent();
+                    _d.sent();
                     integrationList = sp.web.lists.getById(INTEGRATION_LIST_ID);
                     if (!integrationId) return [3 /*break*/, 11];
                     return [4 /*yield*/, integrationList.items.getById(integrationId).update((_b = {},
                             _b[INTEGRATION_TEAM_STATUS_FIELD] = STATUS_DECISION_REACHED,
                             _b))];
                 case 10:
-                    _c.sent();
-                    _c.label = 11;
+                    _d.sent();
+                    _d.label = 11;
                 case 11: return [4 /*yield*/, pmoList.items.getById(pmoItem.Id)()];
                 case 12:
-                    updatedPmoItem = _c.sent();
+                    updatedPmoItem = _d.sent();
                     setPmoItem(updatedPmoItem);
                     setPmoDraft(updatedPmoItem);
                     setValidationErrors({});
@@ -1887,10 +1892,10 @@ var FormApp = function (_a) {
                     // setPmoDecisionItem(updatedPmoItem);
                     // אופציה ג: פשוט להדפיס לקונסול
                     console.log("✅ Updated PMO Decision item:", updatedPmoItem);
-                    _c.label = 13;
+                    _d.label = 13;
                 case 13: return [3 /*break*/, 16];
                 case 14:
-                    e_6 = _c.sent();
+                    e_6 = _d.sent();
                     setMsg({ type: MessageBarType.error, text: 'Save failed: ' + ((e_6 === null || e_6 === void 0 ? void 0 : e_6.message) || e_6) });
                     return [3 /*break*/, 16];
                 case 15:
@@ -2059,18 +2064,24 @@ var FormApp = function (_a) {
             { key: 'Pending', text: dateText ? "Pending \u2014 ".concat(dateText) : 'Pending' },
             { key: 'Not required', text: 'Not required' },
         ]
-        : (canEdit_ITDI && ((isPhase2 && (pmoDraft === null || pmoDraft === void 0 ? void 0 : pmoDraft['StatusOfRFCresponseOrTcRFC']) === 'Issued') || !isPhase2))
-            ? [
+        : (isPhase2) ?
+            [
                 { key: 'Done', text: dateText ? "Done \u2014 ".concat(dateText) : 'Done' },
                 { key: 'Pending', text: dateText ? "Pending \u2014 ".concat(dateText) : 'Pending' },
+                { key: 'Not required', text: 'Not required' },
             ]
-            : canEdit_ITDI
+            : (canEdit_ITDI && ((isPhase2 && (pmoDraft === null || pmoDraft === void 0 ? void 0 : pmoDraft['StatusOfRFCresponseOrTcRFC']) === 'Issued') || !isPhase2))
                 ? [
+                    { key: 'Done', text: dateText ? "Done \u2014 ".concat(dateText) : 'Done' },
                     { key: 'Pending', text: dateText ? "Pending \u2014 ".concat(dateText) : 'Pending' },
                 ]
-                : [
-                    { key: 'Not required', text: 'Not required' },
-                ];
+                : canEdit_ITDI
+                    ? [
+                        { key: 'Pending', text: dateText ? "Pending \u2014 ".concat(dateText) : 'Pending' },
+                    ]
+                    : [
+                        { key: 'Not required', text: 'Not required' },
+                    ];
     /*const itdiOptions = (!not_Relevant && canEdit_ITDI && ((isPhase2 &&  pmoDraft?.['StatusOfRFCresponseOrTcRFC'] === 'Issued') ||(!isPhase2)))
     ? [
       { key: 'Done', text: dateText ? `Done — ${dateText}` : 'Done' },
@@ -2130,6 +2141,7 @@ var FormApp = function (_a) {
         console.log("in the end 🍢 canEdit_ITDI ", canEdit_ITDI);
     }, [canEdit_ITDI, pmoDraft === null || pmoDraft === void 0 ? void 0 : pmoDraft[TARGET_FIELD]]);
     var dynamicHideFieldstenders = React.useMemo(function () {
+        var _a;
         var base = ['Integration', 'IntegrationId', 'Id', 'ID', 'Title'];
         console.log("🪺viewFieldOrder ", viewFieldOrder);
         // 1. יישור לפי ה-View: כל שדה שלא מופיע ב-View → מוסתר
@@ -2145,17 +2157,21 @@ var FormApp = function (_a) {
             }
         }
         console.log("🏞️ base ", base);
+        var tenderPhaseString = String((_a = integrationItem === null || integrationItem === void 0 ? void 0 : integrationItem.TenderPhase) !== null && _a !== void 0 ? _a : '').trim().toLowerCase();
         // 2. לוגיקה של RevisionIncludesChangeInTenderDo
         var rv = pmoDraft === null || pmoDraft === void 0 ? void 0 : pmoDraft.RevisionIncludesChangeInTenderDo; //YES
         var isYes = (function () {
             if (typeof rv === 'boolean')
                 return rv;
             var s = String(rv !== null && rv !== void 0 ? rv : '').trim().toLowerCase();
+            if (tenderPhaseString.indexOf("phase 2") != -1) {
+                return true;
+            }
             return s === 'yes'; //true
         })();
         if (!isYes)
             base.push('RFCResponseLetterNo');
-        console.log("🏞️ base ", base);
+        console.log("🏞️ base ", base, "integrationItem?.TenderPhase ", integrationItem === null || integrationItem === void 0 ? void 0 : integrationItem.TenderPhase);
         // 3. 🔹 לוגיקה חדשה לפי sentProtocol
         var rawSent = pmoDraft === null || pmoDraft === void 0 ? void 0 : pmoDraft.sentProtocol;
         var sentStr = String(rawSent !== null && rawSent !== void 0 ? rawSent : '').trim();
@@ -2164,12 +2180,25 @@ var FormApp = function (_a) {
             sentStr === 'כן' || // אם זה טקסט בעברית
             sentStr.toLowerCase() === 'yes'; // אם יבוא לך באנגלית בעתיד
         // אם זה *לא* "כן" → מסתירים Addendum ו-IntegrationTeamDecisionImplement
+        var isPhase2 = tenderPhaseString.indexOf('phase 2') !== -1;
         if (!isSentYes) {
-            if (base.indexOf('Addendum') === -1)
-                base.push('Addendum');
-            if (base.indexOf('addendumDate') === -1)
-                base.push('addendumDate');
-            console.log("PRTCOL WAS NOT SENT🏕️🏕️🏞️🏕️🏞️");
+            console.log("🏕️🏕️🏞️🏕️🏞️", isPhase2, " ", pmoDraft);
+            if (!isPhase2) {
+                if (base.indexOf('Addendum') === -1)
+                    base.push('Addendum');
+                if (base.indexOf('addendumDate') === -1)
+                    base.push('addendumDate');
+                console.log("PRTCOL WAS NOT SENT🏕️🏕️🏞️🏕️🏞️");
+            }
+            else if (isPhase2) {
+                for (var i = base.length - 1; i >= 0; i--) {
+                    if (base[i] === 'Addendum')
+                        base.splice(i, 1);
+                    if (base[i] === 'addendumDate')
+                        base.splice(i, 1);
+                }
+                console.log("IN P2 ADDENDUM IS DISPLAYED 🏕️🏕️🏞️🏕️🏞️");
+            }
         }
         else {
             for (var i = base.length - 1; i >= 0; i--) {
@@ -2188,7 +2217,7 @@ var FormApp = function (_a) {
             base.push('StatusOfRFCresponseOrTcRFC');
         }
         return base;
-    }, [pmoDraft, pmoDraft === null || pmoDraft === void 0 ? void 0 : pmoDraft.RevisionIncludesChangeInTenderDo, pmoDraft === null || pmoDraft === void 0 ? void 0 : pmoDraft.sentProtocol, viewFieldOrder]);
+    }, [pmoDraft, pmoDraft === null || pmoDraft === void 0 ? void 0 : pmoDraft.RevisionIncludesChangeInTenderDo, integrationItem === null || integrationItem === void 0 ? void 0 : integrationItem.TenderPhase, pmoDraft === null || pmoDraft === void 0 ? void 0 : pmoDraft.sentProtocol, viewFieldOrder]);
     // ✅ אילו שדות של Tender Team *כן* יוצגו (TENDER_TEAM_FIELDS פחות מה שמוסתר דינאמית)
     var tenderTeamVisibleFields = React.useMemo(function () {
         var dynHidden = dynamicHideFieldstenders || [];
@@ -2204,6 +2233,7 @@ var FormApp = function (_a) {
         return Object.keys(src).filter(function (k) { return !tenderTeamVisibleFields.includes(k); });
     }, [pmoDraft, pmoItem, tenderTeamVisibleFields]);
     var dynamicHideFields = React.useMemo(function () {
+        var _a;
         var base = ['Integration', 'IntegrationId', 'Id', 'ID', 'Title'];
         // 1. יישור לפי ה-View: כל שדה שלא מופיע ב-View → מוסתר
         if (viewFieldOrder && viewFieldOrder.length && pmoDraft) {
@@ -2231,6 +2261,8 @@ var FormApp = function (_a) {
         })();
         if (!isYes)
             base.push('RFCResponseLetterNo');
+        var tenderPhaseStr = String((_a = pmoDraft === null || pmoDraft === void 0 ? void 0 : pmoDraft.TenderPhase) !== null && _a !== void 0 ? _a : '').trim().toLowerCase();
+        var isPhase2 = tenderPhaseStr.indexOf('phase 2') !== -1;
         // 3. 🔹 לוגיקה חדשה לפי sentProtocol
         var rawSent = pmoDraft === null || pmoDraft === void 0 ? void 0 : pmoDraft.sentProtocol;
         var sentStr = String(rawSent !== null && rawSent !== void 0 ? rawSent : '').trim();
@@ -2239,7 +2271,7 @@ var FormApp = function (_a) {
             sentStr === 'כן' || // אם זה טקסט בעברית
             sentStr.toLowerCase() === 'yes'; // אם יבוא לך באנגלית בעתיד
         // אם זה *לא* "כן" → מסתירים Addendum ו-IntegrationTeamDecisionImplement
-        if (!isSentYes) {
+        if (!isSentYes && !isPhase2) {
             console.log("protole wasn't sent yet ");
             if (base.indexOf('Addendum') === -1)
                 base.push('Addendum');
@@ -2270,12 +2302,13 @@ var FormApp = function (_a) {
         }
         var sentVal = String((_a = pmoDraft === null || pmoDraft === void 0 ? void 0 : pmoDraft.sentProtocol) !== null && _a !== void 0 ? _a : '').trim();
         var isSentYes = (sentVal === 'true');
-        console.log("💛sentVal ", sentVal);
-        // אם זה אחד השדות הרלוונטיים, והוא לא "כן" → להסתיר
-        if ((internal === 'Addendum' || internal === 'addendumDate') && !isSentYes) {
+        console.log("💛sentVal ", sentVal, isSentYes);
+        /*
+          // אם זה אחד השדות הרלוונטיים, והוא לא "כן" → להסתיר
+          if ((internal === 'Addendum' || internal === 'addendumDate') && !isSentYes) {
             console.log("🏕️🏕️🏞️🏕️🏞️");
             return false;
-        }
+          }*/
         var decision = String((pmoDraft === null || pmoDraft === void 0 ? void 0 : pmoDraft.DecisionRegardingProposedChange) || '').trim();
         var revInc = String((pmoDraft === null || pmoDraft === void 0 ? void 0 : pmoDraft.RevisionIncludesChangeInTenderDo) || '').trim().toLowerCase();
         console.log("🏕️ revInc ", revInc);
@@ -2288,21 +2321,26 @@ var FormApp = function (_a) {
           return  s === 'yes';
         })();*/
         if (internal === 'RFCresponseAsPublishedToBeFilled' || internal === 'StatusOfRFCresponseOrTcRFC') {
-            if (decision !== 'Accept' && decision !== 'Partially accepted')
-                return false;
-        }
-        if (internal === 'Addendum' || internal === 'addendumDate' || internal === 'TenderCommitteeApprovalDate') {
-            console.log("🤩 1 internal ", internal);
-            var isNo = (revInc.toLowerCase() != 'yes');
-            if (isNo && isPhase2) {
-                console.log("🐴🐴🐴🐴🐴 internal === 'TenderCommitteeApprovalDate' and isNo false");
+            console.log("⚓ 3 RFCresponseAsPublishedToBeFilled");
+            if (decision !== 'Accept' && decision !== 'Partially accepted') {
+                console.log("❌");
                 return false;
             }
-            /*if (!revIsTrue || !isPhase2) {
-              console.log("🐴🐴🐴🐴  isFieldVisibleNow TenderCommitteeApprovalDate");
-              return false;
-            }*/
         }
+        /*
+        if (internal === 'Addendum' || internal === 'addendumDate' || internal === 'TenderCommitteeApprovalDate') {
+          console.log("🤩 1 internal ", internal);
+          const isNo = (revInc.toLowerCase() != 'yes');
+          if (isNo && isPhase2) {
+            console.log("🐴🐴🐴🐴🐴 internal === 'TenderCommitteeApprovalDate' and isNo false");
+            return false;
+          }
+    
+          if (!revIsTrue || !isPhase2) {
+            console.log("🐴🐴🐴🐴  isFieldVisibleNow TenderCommitteeApprovalDate");
+            return false;
+          }
+        }*/
         if (internal === 'dog') {
             return false;
         }
@@ -2314,7 +2352,9 @@ var FormApp = function (_a) {
         if (internal === 'RevisionIncludesChangeInTenderDo' ||
             internal === 'RFCResponseLetterNo' ||
             internal === 'RFCresponseAsPublishedToBeFilled') {
+            console.log("⚓ 1=4 RFCresponseAsPublishedToBeFilled");
             if (tenderPhaseStr !== 'phase 2 - bidders’ requests for clarifications (rfcs) of tender documents') {
+                console.log("❌");
                 return false;
             }
         }

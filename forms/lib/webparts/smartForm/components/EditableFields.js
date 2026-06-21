@@ -263,16 +263,22 @@ var EditableFields = function (_a) {
             }
         }
         if (internal === 'RFCresponseAsPublishedToBeFilled') {
+            console.log("⚓ 1 RFCresponseAsPublishedToBeFilled");
             var decision = String((item === null || item === void 0 ? void 0 : item.DecisionRegardingProposedChange) || '').trim();
             console.log('🍩decision ', decision);
-            if (decision !== 'Accept' && decision !== 'Partially accepted') {
-                return null;
+            if (tenderPhaseStr.indexOf('phase 2') === -1) {
+                console.log("1 ❌");
+                if (decision !== 'Accept' && decision !== 'Partially accepted') {
+                    console.log(" 2 ❌");
+                    return null;
+                }
             }
         }
         if (internal === 'Addendum' || internal === 'addendumDate') {
             var decision = String((item === null || item === void 0 ? void 0 : item.RevisionIncludesChangeInTenderDo) || '').trim().toLowerCase();
             console.log('🍩🤪decision ', decision, '\n 🫷🏻item?.RevisionIncludesChangeInTenderDo', item === null || item === void 0 ? void 0 : item.RevisionIncludesChangeInTenderDo);
-            if ((tenderPhaseStr.indexOf('phase 2') > -1 && decision != 'yes') || tenderPhaseStr.indexOf('phase 1') > -1) {
+            //(tenderPhaseStr.indexOf('phase 2') > -1 && decision != 'yes') ||  this was in the if  befor they asked to diplay it in Phase 2 allways
+            if (tenderPhaseStr.indexOf('phase 1') > -1) {
                 console.log("1", tenderPhaseStr.indexOf('phase 2') > -1);
                 console.log("2", decision != 'yes');
                 console.log("3", tenderPhaseStr.indexOf('phase 1') > -1);
@@ -285,8 +291,10 @@ var EditableFields = function (_a) {
             var decision = String((item === null || item === void 0 ? void 0 : item.RevisionIncludesChangeInTenderDo) || '').trim();
             console.log('🍩🎈decision ', decision);
             if (decision != 'Yes' && tenderPhaseStr.indexOf('phase 3') == -1) {
-                console.log("🐴🐴🐴 decision != 'true' editefileds");
-                return null;
+                if (tenderPhaseStr.indexOf('phase 2') == -1) {
+                    console.log("🐴🐴🐴 decision != 'true' editefileds");
+                    return null;
+                }
             }
             if (displayRevisionIncludesChangeInTenderDo != true) {
                 console.log("🐴🐴🐴  displayRevisionIncludesChangeInTenderDo != true editefileds");
@@ -295,9 +303,11 @@ var EditableFields = function (_a) {
         }
         if (internal === 'StatusOfRFCresponseOrTcRFC') {
             var decision = String((item === null || item === void 0 ? void 0 : item.DecisionRegardingProposedChange) || '').trim();
-            if (decision !== 'Accept' && decision !== 'Partially accepted') {
-                console.log('🍩🧋decision', decision);
-                return null;
+            if (tenderPhaseStr.indexOf('phase 2') == -1 && tenderPhaseStr.indexOf('phase 3') == -1) {
+                if (decision !== 'Accept' && decision !== 'Partially accepted') {
+                    console.log('🍩🧋decision', decision);
+                    return null;
+                }
             }
         }
         if (internal === "StatusOfRFCresponseOrTcRFC" || internal === "TenderCommitteeApprovalDate" || internal === "Addendum" || internal === "addendumDate") {

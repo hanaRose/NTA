@@ -283,17 +283,23 @@ const EditableFields: React.FC<Props> = ({
         }
 
         if (internal === 'RFCresponseAsPublishedToBeFilled') {
+          console.log("⚓ 1 RFCresponseAsPublishedToBeFilled");
           const decision = String(item?.DecisionRegardingProposedChange || '').trim();
           console.log('🍩decision ', decision);
-          if (decision !== 'Accept' && decision !== 'Partially accepted') {
-            return null;
+          if(tenderPhaseStr.indexOf('phase 2') === -1){
+            console.log("1 ❌");
+            if (decision !== 'Accept' && decision !== 'Partially accepted') {
+              console.log(" 2 ❌");
+              return null;
+            }
           }
         }
 
         if (internal === 'Addendum' || internal === 'addendumDate' ) {
           const decision = String(item?.RevisionIncludesChangeInTenderDo || '').trim().toLowerCase();
           console.log('🍩🤪decision ', decision, '\n 🫷🏻item?.RevisionIncludesChangeInTenderDo', item?.RevisionIncludesChangeInTenderDo);
-          if ((tenderPhaseStr.indexOf('phase 2') > -1 && decision != 'yes') || tenderPhaseStr.indexOf('phase 1') > -1) {
+          //(tenderPhaseStr.indexOf('phase 2') > -1 && decision != 'yes') ||  this was in the if  befor they asked to diplay it in Phase 2 allways
+          if (tenderPhaseStr.indexOf('phase 1') > -1) {
             console.log("1", tenderPhaseStr.indexOf('phase 2') > -1 );
             console.log("2", decision != 'yes')
             console.log("3", tenderPhaseStr.indexOf('phase 1') > -1);
@@ -307,8 +313,10 @@ const EditableFields: React.FC<Props> = ({
           const decision = String(item?.RevisionIncludesChangeInTenderDo || '').trim();
           console.log('🍩🎈decision ', decision);
           if (decision != 'Yes' && tenderPhaseStr.indexOf('phase 3') == -1) {
-            console.log("🐴🐴🐴 decision != 'true' editefileds");
-            return null;
+            if(tenderPhaseStr.indexOf('phase 2') == -1){
+              console.log("🐴🐴🐴 decision != 'true' editefileds");
+              return null;
+            } 
           }
 
           if(displayRevisionIncludesChangeInTenderDo != true){
@@ -319,11 +327,13 @@ const EditableFields: React.FC<Props> = ({
 
         if (internal === 'StatusOfRFCresponseOrTcRFC') {
           const decision = String(item?.DecisionRegardingProposedChange || '').trim();
-          
-          if (decision !== 'Accept' && decision !== 'Partially accepted') {
-            console.log('🍩🧋decision', decision);
-            return null;
+          if(tenderPhaseStr.indexOf('phase 2') == -1 && tenderPhaseStr.indexOf('phase 3') == -1){
+            if (decision !== 'Accept' && decision !== 'Partially accepted') {
+              console.log('🍩🧋decision', decision);
+              return null;
+            }
           }
+          
          
         }
 

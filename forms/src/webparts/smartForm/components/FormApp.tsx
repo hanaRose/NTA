@@ -1438,7 +1438,7 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
   const showRFCResponseLetterNo = React.useMemo(() => {
     const v = String(pmoDraft?.RevisionIncludesChangeInTenderDo ?? '').trim().toUpperCase();
     console.log("🎀[pmoDraft?.RevisionIncludesChangeInTenderDo]  -  v ", v);
-    return v === 'YES' ;
+    return true;//v === 'YES' ;
   }, [pmoDraft?.RevisionIncludesChangeInTenderDo]);
 
   React.useEffect(() => {
@@ -1783,10 +1783,12 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
 
       
       const v = pmoDraft ? pmoDraft[internal] : undefined;
-
+      const tenderPhaseStr = String(pmoDraft?.TenderPhase ?? '').trim().toLowerCase();
+      const isPhase2 = tenderPhaseStr.indexOf('phase 2') !== -1;
       if(internal === "RFCresponseAsPublishedToBeFilled"){
-        console.log("RFCresponseAsPublishedToBeFilled v ", v);
-        if(v === false){
+        console.log("⚓ 2 RFCresponseAsPublishedToBeFilled");
+        if(v === false && !isPhase2){
+          console.log("❌");
           flage = true;
         }
       }
@@ -1795,6 +1797,7 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
       
 
       if(flage === true){
+        console.log("flage is TRUE 🏳️‍🌈", flage);
          if(internal === "Addendum" || internal === "addendumDate" ){
           continue;
         }
@@ -2164,6 +2167,12 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
             { key: 'Pending', text: dateText ? `Pending — ${dateText}` : 'Pending' },
             { key: 'Not required', text: 'Not required' },
           ]
+          : (isPhase2)?
+          [
+            { key: 'Done', text: dateText ? `Done — ${dateText}` : 'Done' },
+            { key: 'Pending', text: dateText ? `Pending — ${dateText}` : 'Pending' },
+            { key: 'Not required', text: 'Not required' },
+          ]
         : (canEdit_ITDI && ((isPhase2 && pmoDraft?.['StatusOfRFCresponseOrTcRFC'] === 'Issued') || !isPhase2))
           ? [
               { key: 'Done', text: dateText ? `Done — ${dateText}` : 'Done' },
@@ -2259,6 +2268,7 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
     }
 
     console.log("🏞️ base ", base);
+    const tenderPhaseString = String(integrationItem?.TenderPhase ?? '').trim().toLowerCase();
 
 
     // 2. לוגיקה של RevisionIncludesChangeInTenderDo
@@ -2266,11 +2276,14 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
     const isYes = (() => {
       if (typeof rv === 'boolean') return rv;
       const s = String(rv ?? '').trim().toLowerCase();
+      if(tenderPhaseString.indexOf("phase 2") != -1){
+        return true;
+      }
       return s === 'yes';//true
     })();
 
     if (!isYes) base.push('RFCResponseLetterNo');
-    console.log("🏞️ base ", base);
+    console.log("🏞️ base ", base, "integrationItem?.TenderPhase ", integrationItem?.TenderPhase);
     // 3. 🔹 לוגיקה חדשה לפי sentProtocol
     const rawSent = pmoDraft?.sentProtocol;
     const sentStr = String(rawSent ?? '').trim();
@@ -2281,12 +2294,23 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
       sentStr === 'כן' ||          // אם זה טקסט בעברית
       sentStr.toLowerCase() === 'yes'; // אם יבוא לך באנגלית בעתיד
    // אם זה *לא* "כן" → מסתירים Addendum ו-IntegrationTeamDecisionImplement
-   
-    if (!isSentYes) {
-      if (base.indexOf('Addendum') === -1) base.push('Addendum');
-      if (base.indexOf('addendumDate') === -1) base.push('addendumDate');
-      console.log("PRTCOL WAS NOT SENT🏕️🏕️🏞️🏕️🏞️");
+      const isPhase2 = tenderPhaseString.indexOf('phase 2') !== -1;
 
+
+    if (!isSentYes) {
+      console.log("🏕️🏕️🏞️🏕️🏞️", isPhase2," ", pmoDraft);
+      if(!isPhase2){
+        if (base.indexOf('Addendum') === -1) base.push('Addendum');
+        if (base.indexOf('addendumDate') === -1) base.push('addendumDate');
+        console.log("PRTCOL WAS NOT SENT🏕️🏕️🏞️🏕️🏞️");
+      }else if(isPhase2){
+        for (let i = base.length - 1; i >= 0; i--) {
+          if (base[i] === 'Addendum') base.splice(i, 1);
+          if (base[i] === 'addendumDate') base.splice(i, 1);
+        }
+        console.log("IN P2 ADDENDUM IS DISPLAYED 🏕️🏕️🏞️🏕️🏞️");
+      }
+      
     }else{
       for (let i = base.length - 1; i >= 0; i--) {
         if (base[i] === 'Addendum') base.splice(i, 1);
@@ -2310,7 +2334,7 @@ const loadIntegrationViewFieldOrderForPhase = async (tenderPhaseRaw: string) => 
 
 
     return base;
-}, [pmoDraft, pmoDraft?.RevisionIncludesChangeInTenderDo, pmoDraft?.sentProtocol, viewFieldOrder]);
+}, [pmoDraft, pmoDraft?.RevisionIncludesChangeInTenderDo,integrationItem?.TenderPhase, pmoDraft?.sentProtocol, viewFieldOrder]);
 
 
 // ✅ אילו שדות של Tender Team *כן* יוצגו (TENDER_TEAM_FIELDS פחות מה שמוסתר דינאמית)
@@ -2359,9 +2383,11 @@ const dynamicHideFields = React.useMemo<string[]>(() => {
   })();
 
   if (!isYes) base.push('RFCResponseLetterNo');
-
+  const tenderPhaseStr = String(pmoDraft?.TenderPhase ?? '').trim().toLowerCase();
+  const isPhase2 = tenderPhaseStr.indexOf('phase 2') !== -1;
   // 3. 🔹 לוגיקה חדשה לפי sentProtocol
   const rawSent = pmoDraft?.sentProtocol;
+
   const sentStr = String(rawSent ?? '').trim();
 
   // אם זה עמודת בחירה/טקסט עם "כן"
@@ -2371,7 +2397,7 @@ const dynamicHideFields = React.useMemo<string[]>(() => {
     sentStr.toLowerCase() === 'yes'; // אם יבוא לך באנגלית בעתיד
 
   // אם זה *לא* "כן" → מסתירים Addendum ו-IntegrationTeamDecisionImplement
-  if (!isSentYes) {
+  if (!isSentYes && !isPhase2) {
     console.log("protole wasn't sent yet ");
     if (base.indexOf('Addendum') === -1) base.push('Addendum');
     if (base.indexOf('addendumDate') === -1) base.push('addendumDate');
@@ -2401,13 +2427,13 @@ const dynamicHideFields = React.useMemo<string[]>(() => {
     }
       const sentVal = String(pmoDraft?.sentProtocol ?? '').trim();
       const isSentYes = (sentVal === 'true');
-      console.log("💛sentVal ", sentVal);
-
+      console.log("💛sentVal ", sentVal, isSentYes);
+    /*
       // אם זה אחד השדות הרלוונטיים, והוא לא "כן" → להסתיר
       if ((internal === 'Addendum' || internal === 'addendumDate') && !isSentYes) {
         console.log("🏕️🏕️🏞️🏕️🏞️");
         return false;
-      }
+      }*/
 
     const decision = String(pmoDraft?.DecisionRegardingProposedChange || '').trim();
     const revInc = String(pmoDraft?.RevisionIncludesChangeInTenderDo || '').trim().toLowerCase();
@@ -2424,9 +2450,14 @@ const dynamicHideFields = React.useMemo<string[]>(() => {
 
 
     if (internal === 'RFCresponseAsPublishedToBeFilled' || internal === 'StatusOfRFCresponseOrTcRFC') {
-      if (decision !== 'Accept' && decision !== 'Partially accepted') return false;
+      console.log("⚓ 3 RFCresponseAsPublishedToBeFilled");
+      if (decision !== 'Accept' && decision !== 'Partially accepted') {
+        console.log("❌");
+        return false;
+      }
     }
 
+    /*
     if (internal === 'Addendum' || internal === 'addendumDate' || internal === 'TenderCommitteeApprovalDate') {
       console.log("🤩 1 internal ", internal);
       const isNo = (revInc.toLowerCase() != 'yes');
@@ -2435,11 +2466,11 @@ const dynamicHideFields = React.useMemo<string[]>(() => {
         return false;
       }
 
-      /*if (!revIsTrue || !isPhase2) {
+      if (!revIsTrue || !isPhase2) {
         console.log("🐴🐴🐴🐴  isFieldVisibleNow TenderCommitteeApprovalDate");
         return false;
-      }*/
-    }
+      }
+    }*/
 
     if (internal === 'dog') {
       return false;
@@ -2455,7 +2486,9 @@ const dynamicHideFields = React.useMemo<string[]>(() => {
       internal === 'RFCResponseLetterNo' ||
       internal === 'RFCresponseAsPublishedToBeFilled'
     ) {
+      console.log("⚓ 1=4 RFCresponseAsPublishedToBeFilled");
       if (tenderPhaseStr !== 'phase 2 - bidders’ requests for clarifications (rfcs) of tender documents') {
+        console.log("❌")
         return false;
       }
     }
@@ -2558,8 +2591,9 @@ const dynamicHideFields = React.useMemo<string[]>(() => {
       const rawOrder  = viewFieldOrder && viewFieldOrder.length
           ? viewFieldOrder
           : Object.keys(pmoDraft || {});
-
-      const order = rawOrder.filter((k) => (k !== "Addendum" && k !== "addendumDate" ));
+      
+    const order = rawOrder.filter((k) => (k !== "Addendum" && k !== "addendumDate" ));
+      
       console.log("🧤1");
       return (
         <EditableFields
