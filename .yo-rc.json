@@ -1,0 +1,22 @@
+{
+  "@microsoft/generator-sharepoint": {
+    "whichFolder": "subdir",
+    "solutionName": "NTAOnboard",
+    "environment": "spo",
+    "packageManager": "npm",
+    "useGulp": false,
+    "componentType": "webpart",
+    "template": "react",
+    "componentName": "OnboardTopBar",
+    "componentDescription": "Onboarding page header",
+    "plusBeta": false,
+    "isCreatingSolution": true,
+    "nodeVersion": "24.21.0",
+    "sdksVersions": {},
+    "version": "1.24.2",
+    "libraryName": "nta-admin",
+    "libraryId": "f330220d-d919-4f52-8df2-f9d02e1d17d3",
+    "solutionShortDescription": "NTAOnboard description",
+    "skipFeatureDeployment": true
+  }
+}

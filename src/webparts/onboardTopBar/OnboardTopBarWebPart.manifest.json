@@ -1,0 +1,35 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx/client-side-web-part-manifest.schema.json",
+  "id": "b19fc948-610a-4a2d-b787-c04e71bed16a",
+  "alias": "OnboardTopBarWebPart",
+  "componentType": "WebPart",
+  "version": "1.0.0",
+  "manifestVersion": 2,
+  "requiresCustomScript": false,
+  "supportsFullBleed": true,
+  "preconfiguredEntries": [
+    {
+      "groupId": "1edbd9a8-0bfb-4aa2-9afd-14b8cdb5c0c3",
+      "group": {
+        "default": "Other"
+      },
+      "title": {
+        "default": "OnboardTopBar"
+      },
+      "description": {
+        "default": "Header bar for the onboarding page"
+      },
+      "officeFabricIconFontName": "Header",
+      "properties": {
+        "brandTitle": "מסע הקליטה",
+        "brandSubtitle": "100 ימים של קליטה",
+        "displayName": "",
+        "userRole": "עובדת חדשה",
+        "currentDay": 14,
+        "totalDays": 100,
+        "completedTasks": 23,
+        "totalTasks": 40
+      }
+    }
+  ]
+}

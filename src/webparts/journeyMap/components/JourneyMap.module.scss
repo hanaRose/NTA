@@ -1,0 +1,354 @@
+.journeyMap {
+  box-sizing: border-box;
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 16px;
+  color: #232a5c;
+  background-color: #F4F7FC;
+  font-family: Heebo, "Segoe UI", Arial, sans-serif;
+}
+
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.heading {
+  flex: 0 0 auto;
+  text-align: right;
+}
+
+.heading > span {
+  color: #1565c0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.heading h2 {
+  margin: 4px 0 0;
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: -.5px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 18px;
+  color: #5a6285;
+  font-size: 13px;
+}
+
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.legend svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+.legend svg path {
+  fill: none;
+  stroke: #232a5c;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
+
+.legend span:first-child path {
+  stroke: #fff;
+}
+
+.legend span:nth-child(2) circle {
+  fill: #fff;
+  stroke: #232a5c;
+  stroke-width: 3;
+}
+
+.legend span:nth-child(3) path {
+  stroke: #fff;
+  stroke-width: 1.8;
+}
+
+.legend span:nth-child(4) svg {
+  width: 34px;
+}
+
+.legend span:nth-child(4) path {
+  stroke: #232a5c;
+  stroke-dasharray: 4 4;
+  stroke-opacity: .5;
+  stroke-width: 2.2;
+}
+
+.legend span:nth-child(4) circle {
+  fill: #fff;
+  stroke: #232a5c;
+  stroke-opacity: .6;
+  stroke-width: 2;
+}
+
+.legend span:nth-child(5) text {
+  fill: #fff;
+  font-family: Heebo, "Segoe UI", Arial, sans-serif;
+  font-size: 9.5px;
+  font-weight: 700;
+}
+
+.mapCard {
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(35, 42, 92, .06), 0 18px 40px -18px rgba(35, 42, 92, .22);
+}
+
+.cornerDecoration {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 150px;
+  height: 110px;
+  pointer-events: none;
+}
+
+.mapScroll {
+  overflow-x: auto;
+  padding: 20px 16px;
+}
+
+.mapHost {
+  position: relative;
+  margin: 0 auto;
+}
+
+.mapSvg {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.axisLine {
+  fill: none;
+  stroke: #dce1ee;
+  stroke-linecap: round;
+  stroke-width: 2;
+}
+
+.axisProgress {
+  fill: none;
+  stroke: #232a5c;
+  stroke-linecap: round;
+  stroke-width: 4;
+}
+
+.axisEnd {
+  fill: #232a5c;
+}
+
+.axisStart {
+  fill: #fff;
+  stroke: #232a5c;
+  stroke-width: 2.5;
+}
+
+.currentGuide {
+  fill: none;
+  stroke: #232a5c;
+  stroke-dasharray: 4 4;
+  stroke-opacity: .3;
+  stroke-width: 1.5;
+}
+
+.activeTrack {
+  fill: none;
+  stroke-linecap: round;
+  stroke-width: 6;
+}
+
+.futureTrack {
+  fill: none;
+  stroke-dasharray: 5 6;
+  stroke-linecap: round;
+  stroke-opacity: .5;
+  stroke-width: 2.5;
+}
+
+.doneNode {
+  stroke: #fff;
+  stroke-width: 2;
+}
+
+.checkMark {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.9;
+}
+
+.openHalo {
+  opacity: .18;
+}
+
+.openNode {
+  fill: #fff;
+  stroke-width: 4;
+}
+
+.lateHalo {
+  fill: #e8414f;
+  opacity: .15;
+}
+
+.lateNode {
+  fill: #e8414f;
+  stroke: #fff;
+  stroke-width: 2;
+}
+
+.lateMark {
+  stroke: #fff;
+  stroke-linecap: round;
+  stroke-width: 2;
+}
+
+.lateDot {
+  fill: #fff;
+}
+
+.lockedNode {
+  fill: #fff;
+  stroke-opacity: .8;
+  stroke-width: 2.2;
+}
+
+.groupBadge circle {
+  fill: #232a5c;
+  stroke: #fff;
+  stroke-width: 1.5;
+}
+
+.groupBadge text {
+  fill: #fff;
+  font-family: Heebo, "Segoe UI", Arial, sans-serif;
+  font-size: 9.5px;
+  font-weight: 700;
+}
+
+.axisLabel {
+  position: absolute;
+  top: 58px;
+  transform: translateX(50%);
+  color: #5a6285;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.todayTag {
+  position: absolute;
+  top: 33px;
+  display: flex;
+  height: 30px;
+  align-items: center;
+  gap: 7px;
+  padding: 0 12px 0 14px;
+  transform: translateX(50%);
+  border-radius: 15px;
+  color: #fff;
+  background: #232a5c;
+  box-shadow: 0 6px 16px rgba(35, 42, 92, .25);
+  font-size: 13.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.trainIcon {
+  width: 26px;
+  height: 14px;
+  flex: 0 0 auto;
+}
+
+.lane {
+  position: absolute;
+  right: 12px;
+  width: 212px;
+}
+
+.laneHeading {
+  display: flex;
+  height: 20px;
+  align-items: center;
+  gap: 8px;
+}
+
+.laneHeading svg {
+  width: 22px;
+  height: 10px;
+  flex: none;
+}
+
+.laneHeading svg path {
+  fill: none;
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.laneHeading svg circle {
+  fill: #fff;
+  stroke-width: 2;
+}
+
+.laneHeading b {
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.laneHeading em {
+  margin-inline-start: auto;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.laneDescription {
+  margin-top: 1px;
+  padding-inline-start: 30px;
+  color: #5a6285;
+  font-size: 12px;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.laneProgress {
+  display: flex;
+  height: 4px;
+  overflow: hidden;
+  margin: 5px 30px 0 0;
+  border-radius: 2px;
+  background: #e6eaf1;
+}
+
+.laneProgress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+}
+
+@media (max-width: 900px) {
+  .header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+}

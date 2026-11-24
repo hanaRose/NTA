@@ -1,0 +1,39 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
+  "solution": {
+    "name": "nta-admin-client-side-solution",
+    "id": "f330220d-d919-4f52-8df2-f9d02e1d17d3",
+    "version": "1.0.10.0",
+    "includeClientSideAssets": true,
+    "skipFeatureDeployment": true,
+    "developer": {
+      "name": "",
+      "websiteUrl": "",
+      "privacyUrl": "",
+      "termsOfUseUrl": "",
+      "mpnId": "Undefined-1.24.2"
+    },
+    "metadata": {
+      "shortDescription": {
+        "default": "NTAOnboard description"
+      },
+      "longDescription": {
+        "default": "NTAOnboard description"
+      },
+      "screenshotPaths": [],
+      "videoUrl": "",
+      "categories": []
+    },
+    "features": [
+      {
+        "title": "nta-admin Feature",
+        "description": "The feature that activates elements of the nta-admin solution.",
+        "id": "c9392157-3708-4882-89fe-e404e7f04795",
+        "version": "1.0.0.0"
+      }
+    ]
+  },
+  "paths": {
+    "zippedPackage": "solution/nta-admin.sppkg"
+  }
+}

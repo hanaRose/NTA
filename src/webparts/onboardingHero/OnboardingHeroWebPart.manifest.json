@@ -1,0 +1,40 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx/client-side-web-part-manifest.schema.json",
+  "id": "09d54bdd-c938-4de5-b47a-5df5859dc453",
+  "alias": "OnboardingHeroWebPart",
+  "componentType": "WebPart",
+  "version": "1.0.0",
+  "manifestVersion": 2,
+  "requiresCustomScript": false,
+  "supportsFullBleed": true,
+  "preconfiguredEntries": [
+    {
+      "groupId": "1edbd9a8-0bfb-4aa2-9afd-14b8cdb5c0c3",
+      "group": {
+        "default": "Other"
+      },
+      "title": {
+        "default": "Topbar and Hero"
+      },
+      "description": {
+        "default": "Combined full-width top bar and onboarding hero"
+      },
+      "officeFabricIconFontName": "Photo2",
+      "properties": {
+        "userName": "",
+        "userRole": "עובדת חדשה",
+        "brandTitle": "מסע הקליטה",
+        "brandSubtitle": "100 ימים של קליטה",
+        "currentDay": 14,
+        "totalDays": 100,
+        "completedPercent": 57,
+        "completedTasks": 23,
+        "totalTasks": 40,
+        "openTaskCount": 3,
+        "learningMinutes": 31,
+        "bannerTitle": "100 שנים של חזון · 100 ימים של קליטה",
+        "mapUrl": "#journey-map"
+      }
+    }
+  ]
+}

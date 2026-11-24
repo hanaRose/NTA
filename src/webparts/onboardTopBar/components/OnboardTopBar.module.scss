@@ -1,0 +1,186 @@
+.onboardTopBar {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  width: 100%;
+  min-height: 82px;
+  padding: 10px clamp(16px, 2.4vw, 36px);
+  color: #232a5c;
+  background: #fff;
+  border-bottom: 1px solid #dde3ec;
+  font-family: Heebo, "Segoe UI", Arial, sans-serif;
+}
+
+.standalone {
+  background-color: #F4F7FC;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+}
+
+.brandMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 17px;
+  color: #fff;
+  background: #232a5c;
+  font-size: 15px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.brandText,
+.profileText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.35;
+}
+
+.brandText strong {
+  font-size: 17px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.brandText span,
+.profileText span {
+  color: #5a6285;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.progress {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 180px;
+}
+
+.progressLabels {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #5a6285;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.progressLabels strong {
+  color: #232a5c;
+  font-weight: 800;
+}
+
+.progressTracks {
+  display: flex;
+  gap: 5px;
+  height: 13px;
+}
+
+.progressTrack {
+  flex: 1 1 0;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #e6eaf1;
+}
+
+.progressFill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  transition: width 180ms ease;
+}
+
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+}
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  flex: 0 0 54px;
+  border: 3px solid #f2b33d;
+  border-radius: 50%;
+  color: #232a5c;
+  background: #fff1cf;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.profileText strong {
+  color: #232a5c;
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+@media (max-width: 800px) {
+  .onboardTopBar {
+    flex-wrap: wrap;
+    gap: 14px 20px;
+  }
+
+  .brand {
+    margin-inline-end: auto;
+  }
+
+  .progress {
+    order: 1;
+    flex-basis: 100%;
+  }
+}
+
+@media (max-width: 420px) {
+  .onboardTopBar {
+    padding-inline: 12px;
+  }
+
+  .brand {
+    gap: 8px;
+  }
+
+  .brandMark,
+  .avatar {
+    width: 46px;
+    height: 46px;
+  }
+
+  .avatar {
+    flex-basis: 46px;
+  }
+
+  .brandText strong {
+    font-size: 15px;
+  }
+
+  .brandText span,
+  .profileText span {
+    font-size: 12px;
+  }
+
+  .profile {
+    gap: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progressFill {
+    transition: none;
+  }
+}

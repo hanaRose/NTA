@@ -1,0 +1,33 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx/client-side-web-part-manifest.schema.json",
+  "id": "ef8af61a-f786-40f5-9851-e34f2fd89d4c",
+  "alias": "TasksSectionWebPart",
+  "componentType": "WebPart",
+  "version": "1.0.0",
+  "manifestVersion": 2,
+  "requiresCustomScript": false,
+  "preconfiguredEntries": [
+    {
+      "groupId": "1edbd9a8-0bfb-4aa2-9afd-14b8cdb5c0c3",
+      "group": {
+        "default": "Other"
+      },
+      "title": {
+        "default": "TasksSection"
+      },
+      "description": {
+        "default": "Onboarding tasks that are open now and coming soon"
+      },
+      "officeFabricIconFontName": "TaskList",
+      "properties": {
+        "currentDay": 14,
+        "payrollUrl": "",
+        "cyberUrl": "",
+        "safetyGearUrl": "",
+        "sapUrl": "",
+        "biUrl": "",
+        "knowledgeUrl": ""
+      }
+    }
+  ]
+}

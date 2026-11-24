@@ -1,0 +1,32 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx/client-side-web-part-manifest.schema.json",
+  "id": "e29c68f3-c2d8-4fa8-9d6f-55b72c7f5a1d",
+  "alias": "TipsBarWebPart",
+  "componentType": "WebPart",
+  "version": "1.0.0",
+  "manifestVersion": 2,
+  "requiresCustomScript": false,
+  "preconfiguredEntries": [
+    {
+      "groupId": "1edbd9a8-0bfb-4aa2-9afd-14b8cdb5c0c3",
+      "group": {
+        "default": "Other"
+      },
+      "title": {
+        "default": "TipsBar"
+      },
+      "description": {
+        "default": "A featured onboarding tip with a list of available tips"
+      },
+      "officeFabricIconFontName": "Lightbulb",
+      "properties": {
+        "tipTitle": "לוח חגים וחופשות",
+        "tipText": "לוח החגים והחופשות של השנה כבר בפורטל. כדאי לשמור אותו במועדפים ולתכנן חופשות מראש.",
+        "tipDay": 14,
+        "category": "תנאי הנסיעה",
+        "tipLink": "",
+        "tipLinkLabel": "ללוח החופשות בפורטל"
+      }
+    }
+  ]
+}

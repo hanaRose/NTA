@@ -1,0 +1,48 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/config.2.0.schema.json",
+  "version": "2.0",
+  "bundles": {
+    "onboard-top-bar-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/onboardTopBar/OnboardTopBarWebPart.js",
+          "manifest": "./src/webparts/onboardTopBar/OnboardTopBarWebPart.manifest.json"
+        }
+      ]
+    },
+    "onboarding-hero-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/onboardingHero/OnboardingHeroWebPart.js",
+          "manifest": "./src/webparts/onboardingHero/OnboardingHeroWebPart.manifest.json"
+        }
+      ]
+    },
+    "tips-bar-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/tipsBar/TipsBarWebPart.js",
+          "manifest": "./src/webparts/tipsBar/TipsBarWebPart.manifest.json"
+        }
+      ]
+    },
+    "tasks-section-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/tasksSection/TasksSectionWebPart.js",
+          "manifest": "./src/webparts/tasksSection/TasksSectionWebPart.manifest.json"
+        }
+      ]
+    },
+    "journey-map-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/journeyMap/JourneyMapWebPart.js",
+          "manifest": "./src/webparts/journeyMap/JourneyMapWebPart.manifest.json"
+        }
+      ]
+    }
+  },
+  "externals": {},
+  "localizedResources": {}
+}
