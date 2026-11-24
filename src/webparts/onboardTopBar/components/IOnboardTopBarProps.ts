@@ -1,3 +1,5 @@
+import { IOnboardingClusterMetrics } from '../../../services/onboarding/IOnboardingTaskMetrics';
+
 export interface IOnboardTopBarProps {
   brandTitle: string;
   brandSubtitle: string;
@@ -7,5 +9,6 @@ export interface IOnboardTopBarProps {
   totalDays: number;
   completedTasks: number;
   totalTasks: number;
+  clusterProgress?: IOnboardingClusterMetrics[];
   standalone?: boolean;
 }

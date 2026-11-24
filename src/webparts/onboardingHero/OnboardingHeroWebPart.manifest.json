@@ -21,19 +21,24 @@
       },
       "officeFabricIconFontName": "Photo2",
       "properties": {
-        "userName": "",
         "userRole": "עובדת חדשה",
         "brandTitle": "מסע הקליטה",
         "brandSubtitle": "100 ימים של קליטה",
-        "currentDay": 14,
         "totalDays": 100,
-        "completedPercent": 57,
-        "completedTasks": 23,
-        "totalTasks": 40,
-        "openTaskCount": 3,
-        "learningMinutes": 31,
         "bannerTitle": "100 שנים של חזון · 100 ימים של קליטה",
-        "mapUrl": "#journey-map"
+        "mapUrl": "#journey-map",
+        "welcomeParagraph1": "ברוכה הבאה לנת״ע. החלום על רכבת קלה בתל אביב נולד ב-1925. ב-2023 נפתח הקו האדום, הקווים הירוק והסגול בבנייה, והמטרו בדרך. את מצטרפת בדיוק עכשיו, לדור שיבנה את ההמשך.",
+        "welcomeParagraph2": "גם המסע שלך מתחיל: {totalDays} ימי קליטה בשישה אשכולות תוכן. בכל יום ייפתחו לך רק המשימות שמתאימות לשלב שלך, כך שתדעי תמיד איפה את ומה מחכה לך.",
+        "slogan": "כי היסטוריה עושים עם אנשים כמוך.",
+        "storyTitle": "100 שנים של חזון",
+        "step1Heading": "1925",
+        "step1Description": "נולד החלום על רכבת קלה בתל אביב",
+        "step2Heading": "2023",
+        "step2Description": "נפתח הקו האדום",
+        "step3Heading": "היום",
+        "step3Description": "הקווים הירוק והסגול בבנייה, ואת מצטרפת",
+        "step4Heading": "הפרק הבא",
+        "step4Description": "המטרו"
       }
     }
   ]

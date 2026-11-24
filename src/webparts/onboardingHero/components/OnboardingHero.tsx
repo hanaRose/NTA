@@ -1,7 +1,9 @@
 import * as React from 'react';
 import styles from './OnboardingHero.module.scss';
-import { IOnboardingHeroProps } from './IOnboardingHeroProps';
+import { HeroTimelineStepVariant, IHeroTimelineStep, IOnboardingHeroProps } from './IOnboardingHeroProps';
 import OnboardTopBar from '../../onboardTopBar/components/OnboardTopBar';
+
+const HEEBO_FONT_STYLESHEET: string = 'https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800;900&display=swap';
 
 function readInteger(value: number, fallback: number, minimum: number, maximum?: number): number {
   const parsedValue: number = Math.floor(Number(value));
@@ -23,14 +25,34 @@ function getInitials(name: string): string {
     : words[0].slice(0, 2);
 }
 
+function getTimelineClass(variant: HeroTimelineStepVariant): string {
+  switch (variant) {
+    case 'past':
+      return styles.past;
+    case 'red':
+      return styles.red;
+    case 'now':
+      return styles.now;
+    case 'next':
+      return styles.next;
+    default:
+      return styles.past;
+  }
+}
+
 const OnboardingHero: React.FC<IOnboardingHeroProps> = (props: IOnboardingHeroProps) => {
-  const [activeBanner, setActiveBanner] = React.useState<number>(0);
+  const [bannerState, setBannerState] = React.useState<{ active: number; leaving: number | null }>({
+    active: 0,
+    leaving: null
+  });
   const [isPaused, setIsPaused] = React.useState<boolean>(false);
   const totalDays: number = readInteger(props.totalDays, 100, 1);
   const currentDay: number = readInteger(props.currentDay, 1, 1, totalDays);
-  const totalTasks: number = readInteger(props.totalTasks, 40, 1);
+  const totalTasks: number = readInteger(props.totalTasks, 0, 0);
   const completedTasks: number = readInteger(props.completedTasks, 0, 0, totalTasks);
-  const completedPercent: number = Math.floor((completedTasks / totalTasks) * 100);
+  const completedPercent: number = totalTasks > 0
+    ? Math.floor((completedTasks / totalTasks) * 100)
+    : 0;
   const openTaskCount: number = readInteger(props.openTaskCount, 0, 0);
   const learningMinutes: number = readInteger(props.learningMinutes, 0, 0);
   const userName: string = (props.userName || '').trim() || 'עובד/ת';
@@ -38,19 +60,84 @@ const OnboardingHero: React.FC<IOnboardingHeroProps> = (props: IOnboardingHeroPr
   const brandTitle: string = props.brandTitle || 'מסע הקליטה';
   const brandSubtitle: string = props.brandSubtitle || '100 ימים של קליטה';
   const bannerTitle: string = props.bannerTitle || '100 שנים של חזון · 100 ימים של קליטה';
-  const mapUrl: string = props.mapUrl || '#journey-map';
+  const mapUrl: string = props.mapUrl || '#journeyMap';
+  const welcomeParagraph1: string = props.welcomeParagraph1 || 'ברוכה הבאה לנת״ע. החלום על רכבת קלה בתל אביב נולד ב-1925. ב-2023 נפתח הקו האדום, הקווים הירוק והסגול בבנייה, והמטרו בדרך. את מצטרפת בדיוק עכשיו, לדור שיבנה את ההמשך.';
+  const welcomeParagraph2: string = props.welcomeParagraph2 || 'גם המסע שלך מתחיל: 100 ימי קליטה בשישה אשכולות תוכן. בכל יום ייפתחו לך רק המשימות שמתאימות לשלב שלך, כך שתדעי תמיד איפה את ומה מחכה לך.';
+  const slogan: string = props.slogan || 'כי היסטוריה עושים עם אנשים כמוך.';
+  const storyTitle: string = props.storyTitle || '100 שנים של חזון';
+  const activeBanner: number = bannerState.active;
+
+  const showBanner = (index: number): void => {
+    setBannerState((current) => current.active === index
+      ? current
+      : { active: index, leaving: current.active });
+  };
+
+  const getBannerMessageClass = (index: number): string => {
+    if (bannerState.active === index) {
+      return styles.bannerMessageActive;
+    }
+    if (bannerState.leaving === index) {
+      return styles.bannerMessageLeaving;
+    }
+    return styles.bannerMessageHidden;
+  };
 
   React.useEffect(() => {
-    if (isPaused || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const hasHeeboStylesheet: boolean = Array.from(
+      document.head.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]')
+    ).some((link: HTMLLinkElement) => link.href === HEEBO_FONT_STYLESHEET);
+
+    if (!hasHeeboStylesheet) {
+      const fontLink: HTMLLinkElement = document.createElement('link');
+      fontLink.rel = 'stylesheet';
+      fontLink.href = HEEBO_FONT_STYLESHEET;
+      document.head.appendChild(fontLink);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (isPaused || props.isLoading || props.loadError || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       return undefined;
     }
 
     const timer: number = window.setInterval(() => {
-      setActiveBanner((current: number) => (current === 0 ? 1 : 0));
+      setBannerState((current) => ({
+        active: current.active === 0 ? 1 : 0,
+        leaving: current.active
+      }));
     }, 7000);
 
     return () => window.clearInterval(timer);
-  }, [isPaused]);
+  }, [isPaused, props.isLoading, props.loadError]);
+
+  React.useEffect(() => {
+    const leavingBanner: number | null = bannerState.leaving;
+    if (leavingBanner === null) {
+      return undefined;
+    }
+
+    const timer: number = window.setTimeout(() => {
+      setBannerState((current) => current.leaving === leavingBanner
+        ? { ...current, leaving: null }
+        : current);
+    }, 650);
+
+    return () => window.clearTimeout(timer);
+  }, [bannerState.leaving]);
+
+  if (props.isLoading) {
+    return <div className={styles.dataState} role="status">טוען את נתוני מסע הקליטה...</div>;
+  }
+
+  if (props.loadError) {
+    return (
+      <div className={`${styles.dataState} ${styles.dataError}`} role="alert">
+        <strong>לא ניתן לטעון את נתוני מסע הקליטה.</strong>
+        <span>{props.loadError}</span>
+      </div>
+    );
+  }
 
   return (
     <React.Fragment>
@@ -63,6 +150,7 @@ const OnboardingHero: React.FC<IOnboardingHeroProps> = (props: IOnboardingHeroPr
         totalDays={totalDays}
         completedTasks={completedTasks}
         totalTasks={totalTasks}
+        clusterProgress={props.clusterProgress}
       />
       <section className={styles.hero} dir="rtl" aria-label="פתיחת מסע הקליטה">
       <svg
@@ -85,17 +173,22 @@ const OnboardingHero: React.FC<IOnboardingHeroProps> = (props: IOnboardingHeroPr
           onMouseLeave={() => setIsPaused(false)}
         >
           <span className={styles.bannerLabel}><i aria-hidden="true" />מסע הקליטה</span>
-          <div className={styles.bannerMessage} aria-live="polite" aria-atomic="true">
-            {activeBanner === 0 ? (
-              <strong key="title">{bannerTitle}</strong>
-            ) : (
-              <React.Fragment key="progress">
-                <strong>יום {currentDay} מתוך {totalDays}</strong>
-                <span className={styles.bannerProgress} aria-label={`${currentDay} מתוך ${totalDays} ימים`}>
-                  <i style={{ width: `${(currentDay / totalDays) * 100}%` }} />
-                </span>
-              </React.Fragment>
-            )}
+          <div className={styles.bannerMessages} aria-live="polite" aria-atomic="true">
+            <div
+              className={`${styles.bannerMessage} ${getBannerMessageClass(0)}`}
+              aria-hidden={activeBanner !== 0}
+            >
+              <strong>{bannerTitle}</strong>
+            </div>
+            <div
+              className={`${styles.bannerMessage} ${getBannerMessageClass(1)}`}
+              aria-hidden={activeBanner !== 1}
+            >
+              <strong>יום {currentDay} מתוך {totalDays}</strong>
+              <span className={styles.bannerProgress} aria-label={`${currentDay} מתוך ${totalDays} ימים`}>
+                <i style={{ width: `${(currentDay / totalDays) * 100}%` }} />
+              </span>
+            </div>
           </div>
           <div className={styles.bannerDots} role="group" aria-label="בחירת הודעה">
             <button
@@ -104,7 +197,7 @@ const OnboardingHero: React.FC<IOnboardingHeroProps> = (props: IOnboardingHeroPr
               aria-pressed={activeBanner === 0}
               onFocus={() => setIsPaused(true)}
               onBlur={() => setIsPaused(false)}
-              onClick={() => setActiveBanner(0)}
+              onClick={() => showBanner(0)}
             />
             <button
               type="button"
@@ -112,7 +205,7 @@ const OnboardingHero: React.FC<IOnboardingHeroProps> = (props: IOnboardingHeroPr
               aria-pressed={activeBanner === 1}
               onFocus={() => setIsPaused(true)}
               onBlur={() => setIsPaused(false)}
-              onClick={() => setActiveBanner(1)}
+              onClick={() => showBanner(1)}
             />
           </div>
         </div>
@@ -125,15 +218,9 @@ const OnboardingHero: React.FC<IOnboardingHeroProps> = (props: IOnboardingHeroPr
             </div>
             <h1>היום יום {currentDay} מתוך {totalDays}</h1>
             <div className={styles.welcome}>
-              <p>
-                ברוכה הבאה לנת״ע. החלום על רכבת קלה בתל אביב נולד ב-1925. ב-2023 נפתח הקו האדום,
-                הקווים הירוק והסגול בבנייה, והמטרו בדרך. את מצטרפת בדיוק עכשיו, לדור שיבנה את ההמשך.
-              </p>
-              <p>
-                גם המסע שלך מתחיל: {totalDays} ימי קליטה בשישה אשכולות תוכן. בכל יום ייפתחו לך רק
-                המשימות שמתאימות לשלב שלך, כך שתדעי תמיד איפה את ומה מחכה לך.
-              </p>
-              <p className={styles.slogan}>כי היסטוריה עושים עם אנשים כמוך.</p>
+              <p>{welcomeParagraph1}</p>
+              <p>{welcomeParagraph2.replace('{totalDays}', String(totalDays))}</p>
+              <p className={styles.slogan}>{slogan}</p>
             </div>
 
             <div className={styles.heroActions}>
@@ -167,25 +254,32 @@ const OnboardingHero: React.FC<IOnboardingHeroProps> = (props: IOnboardingHeroPr
 
           <aside className={styles.story} aria-label="סיפור המסגרת">
             <span className={styles.storyEyebrow}>סיפור המסגרת</span>
-            <h2>100 שנים של חזון</h2>
+            <h2>{storyTitle}</h2>
             <ol className={styles.timeline}>
-              <li className={styles.past}>
-                <strong>1925</strong>
-                <span>נולד החלום על רכבת קלה בתל אביב</span>
-              </li>
-              <li className={styles.red}>
-                <strong>2023</strong>
-                <span>נפתח הקו האדום</span>
-              </li>
-              <li className={styles.now}>
-                <span className={styles.timelineAvatar} aria-hidden="true">{getInitials(userName)}</span>
-                <strong>היום</strong>
-                <span>הקווים הירוק והסגול בבנייה, ואת מצטרפת</span>
-              </li>
-              <li className={styles.next}>
-                <strong>הפרק הבא</strong>
-                <span>המטרו</span>
-              </li>
+              {props.timelineSteps.map((step: IHeroTimelineStep) => (
+                <li className={getTimelineClass(step.variant)} key={step.id}>
+                  {step.variant === 'now' && (
+                    <span className={styles.timelineAvatar} aria-hidden="true">
+                      <span className={styles.timelineAvatarPhoto}>
+                        <svg width="36" height="36" viewBox="0 0 64 64">
+                          <rect width="64" height="64" fill="#FCE7B8" />
+                          <path d="M20 30C19 16 25 11 32 11C39 11 45 16 44 30L46 50C41 49 39 45 39 40L25 40C25 45 23 49 18 50Z" fill="#4A2E1F" />
+                          <path d="M11 66C11 52 20.5 46 32 46C43.5 46 53 52 53 66Z" fill="#232A5C" />
+                          <path d="M27.5 37h9v9.5c0 2.2-2 3.5-4.5 3.5s-4.5-1.3-4.5-3.5z" fill="#E8B896" />
+                          <path d="M27.5 41.5c2.8 1.6 6.2 1.6 9 0V44c-2.8 1.4-6.2 1.4-9 0z" fill="#000" opacity=".08" />
+                          <ellipse cx="32" cy="29" rx="10.5" ry="12.5" fill="#E8B896" />
+                          <path d="M21.5 28C21 18 26 14.5 32 14.5C38 14.5 43 18 42.5 28C40 22 35 19.5 30 21C27 22 24 24.5 21.5 28Z" fill="#4A2E1F" />
+                          <circle cx="28" cy="29.5" r="1.35" fill="#2A2438" />
+                          <circle cx="36" cy="29.5" r="1.35" fill="#2A2438" />
+                          <path d="M28.6 34.6Q32 37.2 35.4 34.6" fill="none" stroke="#A85A48" strokeWidth="1.4" strokeLinecap="round" />
+                        </svg>
+                      </span>
+                    </span>
+                  )}
+                  <strong>{step.heading}</strong>
+                  <span>{step.description}</span>
+                </li>
+              ))}
             </ol>
           </aside>
         </div>

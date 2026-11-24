@@ -1,15 +1,19 @@
 import * as React from 'react';
 import styles from './OnboardTopBar.module.scss';
 import { IOnboardTopBarProps } from './IOnboardTopBarProps';
+import {
+  IOnboardingClusterMetrics,
+  ONBOARDING_CLUSTER_NAMES
+} from '../../../services/onboarding/IOnboardingTaskMetrics';
 
-const progressColors: string[] = [
-  '#20B2A6',
-  '#F2A832',
-  '#4BAA43',
-  '#9B4BCC',
-  '#E8414F',
-  '#4C78C9'
-];
+const progressColors: { [clusterName: string]: string } = {
+  'תחנת מוצא': '#e84a3c',
+  'מרכז בקרה': '#9b4dca',
+  'תנאי הנסיעה': '#4fa83d',
+  'חוקי הדרך': '#f2a93b',
+  'מרכז לוגיסטי': '#1fb5a6',
+  'המסלול האישי': '#3d9be9'
+};
 
 function toPositiveInteger(value: number, fallback: number): number {
   const parsedValue: number = Number(value);
@@ -35,12 +39,19 @@ const OnboardTopBar: React.FC<IOnboardTopBarProps> = (props: IOnboardTopBarProps
     totalDays,
     Math.max(1, toPositiveInteger(props.currentDay, 1))
   );
-  const totalTasks: number = toPositiveInteger(props.totalTasks, 1);
+  const parsedTotalTasks: number = Math.floor(Number(props.totalTasks));
+  const totalTasks: number = Number.isFinite(parsedTotalTasks) ? Math.max(0, parsedTotalTasks) : 0;
   const completedTasks: number = Math.min(
     totalTasks,
     Math.max(0, Math.floor(Number(props.completedTasks) || 0))
   );
-  const progress: number = completedTasks / totalTasks;
+  const progress: number = totalTasks > 0 ? completedTasks / totalTasks : 0;
+  const clusterProgress: IOnboardingClusterMetrics[] = props.clusterProgress ||
+    ONBOARDING_CLUSTER_NAMES.map((name: string) => ({
+      name,
+      totalTasks: 1,
+      completedTasks: 0
+    }));
   const displayName: string = (props.displayName || '').trim() || 'עובד/ת';
   const brandTitle: string = props.brandTitle || 'מסע הקליטה';
   const brandSubtitle: string = props.brandSubtitle || '100 ימים של קליטה';
@@ -73,14 +84,25 @@ const OnboardTopBar: React.FC<IOnboardTopBarProps> = (props: IOnboardTopBarProps
           role="img"
           aria-label={`הושלמו ${completedTasks} מתוך ${totalTasks} משימות`}
         >
-          {progressColors.map((color: string, index: number) => {
-            const segmentProgress: number = Math.max(
-              0,
-              Math.min(1, progress * progressColors.length - index)
-            );
+          {clusterProgress.map((cluster: IOnboardingClusterMetrics, index: number) => {
+            const clusterCompletion: number = cluster.totalTasks > 0
+              ? cluster.completedTasks / cluster.totalTasks
+              : 0;
+            const overallCompletion: number = progress * clusterProgress.length - index;
+            const segmentProgress: number = props.clusterProgress
+              ? Math.max(0, Math.min(1, clusterCompletion))
+              : Math.max(0, Math.min(1, overallCompletion));
+            const color: string = progressColors[cluster.name] || '#64748b';
 
             return (
-              <span className={styles.progressTrack} key={color}>
+              <span
+                className={styles.progressTrack}
+                key={cluster.name}
+                title={props.clusterProgress
+                  ? `${cluster.name}: ${cluster.completedTasks}/${cluster.totalTasks}`
+                  : undefined}
+                style={{ flex: `${Math.max(cluster.totalTasks, 1)} 1 0` }}
+              >
                 <span
                   className={styles.progressFill}
                   style={{ width: `${segmentProgress * 100}%`, backgroundColor: color }}

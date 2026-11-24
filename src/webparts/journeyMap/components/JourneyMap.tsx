@@ -221,7 +221,7 @@ const JourneyMap: React.FC<IJourneyMapProps> = (props: IJourneyMapProps) => {
   const trackBottom: number = FIRST_ROW_Y + 5 * ROW_GAP + 24;
 
   return (
-    <section className={styles.journeyMap} dir="rtl" aria-label="מפת מסע הקליטה">
+    <section id="journeyMap" className={styles.journeyMap} dir="rtl" aria-label="מפת מסע הקליטה">
       <header className={styles.header}>
         <div className={styles.heading}>
           <span>הסיפור שלך · 100 ימי קליטה</span>
