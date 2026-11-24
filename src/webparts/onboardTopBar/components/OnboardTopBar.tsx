@@ -2,18 +2,10 @@ import * as React from 'react';
 import styles from './OnboardTopBar.module.scss';
 import { IOnboardTopBarProps } from './IOnboardTopBarProps';
 import {
+  ONBOARDING_CLUSTER_COLORS,
   IOnboardingClusterMetrics,
   ONBOARDING_CLUSTER_NAMES
 } from '../../../services/onboarding/IOnboardingTaskMetrics';
-
-const progressColors: { [clusterName: string]: string } = {
-  'תחנת מוצא': '#e84a3c',
-  'מרכז בקרה': '#9b4dca',
-  'תנאי הנסיעה': '#4fa83d',
-  'חוקי הדרך': '#f2a93b',
-  'מרכז לוגיסטי': '#1fb5a6',
-  'המסלול האישי': '#3d9be9'
-};
 
 function toPositiveInteger(value: number, fallback: number): number {
   const parsedValue: number = Number(value);
@@ -92,7 +84,7 @@ const OnboardTopBar: React.FC<IOnboardTopBarProps> = (props: IOnboardTopBarProps
             const segmentProgress: number = props.clusterProgress
               ? Math.max(0, Math.min(1, clusterCompletion))
               : Math.max(0, Math.min(1, overallCompletion));
-            const color: string = progressColors[cluster.name] || '#64748b';
+            const color: string = ONBOARDING_CLUSTER_COLORS[cluster.name] || '#64748b';
 
             return (
               <span

@@ -16,6 +16,7 @@ import {
 import { IOnboardingTaskMetricsService } from '../../services/onboarding/IOnboardingTaskMetricsService';
 import SharePointOnboardingProgressService from '../../services/onboarding/SharePointOnboardingProgressService';
 import SharePointOnboardingTaskMetricsService from '../../services/onboarding/SharePointOnboardingTaskMetricsService';
+import { ONBOARDING_TASK_COMPLETIONS_CHANGED } from '../../services/onboarding/onboardingTaskEvents';
 import OnboardingHero from './components/OnboardingHero';
 import { IHeroTimelineStep, IOnboardingHeroProps } from './components/IOnboardingHeroProps';
 
@@ -68,6 +69,10 @@ export default class OnboardingHeroWebPart extends BaseClientSideWebPart<IOnboar
     this._taskMetricsService = new SharePointOnboardingTaskMetricsService(
       this.context.spHttpClient,
       this.context.pageContext.web.absoluteUrl
+    );
+    window.addEventListener(
+      ONBOARDING_TASK_COMPLETIONS_CHANGED,
+      this._onTaskCompletionsChanged
     );
     this.loadProgress().catch((error: unknown) => {
       console.error('Unexpected error while loading onboarding progress.', error);
@@ -134,6 +139,10 @@ export default class OnboardingHeroWebPart extends BaseClientSideWebPart<IOnboar
 
   protected onDispose(): void {
     this._isHeroDisposed = true;
+    window.removeEventListener(
+      ONBOARDING_TASK_COMPLETIONS_CHANGED,
+      this._onTaskCompletionsChanged
+    );
     ReactDom.unmountComponentAtNode(this.domElement);
   }
 
@@ -142,6 +151,7 @@ export default class OnboardingHeroWebPart extends BaseClientSideWebPart<IOnboar
   }
 
   private async loadProgress(): Promise<void> {
+    this._progressError = undefined;
     try {
       if (!this._progressService) {
         throw new Error('The onboarding progress service is not available.');
@@ -163,6 +173,15 @@ export default class OnboardingHeroWebPart extends BaseClientSideWebPart<IOnboar
       }
     }
   }
+
+  private _onTaskCompletionsChanged = (): void => {
+    if (this._isHeroDisposed) {
+      return;
+    }
+    this.loadProgress().catch((error: unknown) => {
+      console.error('Unexpected error while refreshing onboarding progress.', error);
+    });
+  };
 
   protected getPropertyPaneConfiguration(): IPropertyPaneConfiguration {
     return {

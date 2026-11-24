@@ -7,6 +7,7 @@
   color: #232a5c;
   background-color: #F4F7FC;
   font-family: Heebo, "Segoe UI", Arial, sans-serif;
+  text-align: right;
 }
 
 .sectionHeader {
@@ -19,6 +20,7 @@
 .eyebrow {
   color: #1565c0;
   font-size: 14px;
+  font-weight: bold;
 }
 
 .sectionHeader h2 {
@@ -33,7 +35,7 @@
   gap: 18px;
   padding-bottom: 5px;
   color: #5a6285;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .summary span {
@@ -57,18 +59,36 @@
   background: #232a5c;
 }
 
-.columns {
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-  align-items: start;
-  gap: 28px;
+.dataState {
+  padding: 18px 20px;
+  border-radius: 12px;
+  color: #232a5c;
+  background: #fff;
+}
+
+.dataError {
+  border-inline-start: 4px solid #e8414f;
+}
+
+.columnsNew {
+  // display: grid;
+  // grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  // align-items: start;
+  // gap: 28px;
+  display: flex;
+  gap: 50px
 }
 
 .column {
   min-width: 0;
 }
 
-.column h3 {
+.column1 {
+  min-width: 0;
+  width: 60%;
+}
+
+.column h3, .column1 h3 {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -77,13 +97,13 @@
   font-weight: 800;
 }
 
-.column h3 small {
+.column h3 small, .column1 h3 small {
   color: #5a6285;
   font-size: 13px;
   font-weight: 500;
 }
 
-.column h3 svg {
+.column h3 svg, .column1 h3 svg {
   width: 17px;
   height: 17px;
   fill: none;
@@ -106,8 +126,8 @@
   grid-template-columns: 24px 120px minmax(0, 1fr) auto;
   align-items: center;
   gap: 14px;
-  min-height: 130px;
-  padding: 12px 20px;
+  //min-height: 130px;
+  padding: 15px 20px;
 }
 
 .taskRow + .taskRow {
@@ -425,11 +445,6 @@
 }
 
 @media (max-width: 680px) {
-  .columns {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 22px;
-  }
-
   .sectionHeader {
     align-items: flex-start;
     flex-direction: column;
@@ -491,5 +506,147 @@
 
   .dialog {
     padding: 24px 18px;
+  }
+}
+
+.toastContainer {
+  position: fixed;
+  right: 16px;
+  bottom: 24px;
+  left: 16px;
+  z-index: 10001;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.toast {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: min(680px, 100%);
+  padding: 14px 18px;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 18px;
+  color: #fff;
+  background: #232a5c;
+  box-shadow: 0 16px 42px rgba(14, 18, 54, .3);
+  text-align: right;
+  pointer-events: auto;
+}
+
+.toastIcon {
+  display: inline-flex;
+  flex: 0 0 42px;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  color: #232a5c;
+  background: #fce7b8;
+}
+
+.toastIcon svg {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.toastText {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  line-height: 1.4;
+}
+
+.toastText strong {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.toastText span {
+  color: rgba(255, 255, 255, .78);
+  font-size: 13px;
+}
+
+.toastUndo,
+.toastOpenLink {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, .28);
+  border-radius: 11px;
+  color: #fff;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.toastUndo:hover,
+.toastOpenLink:hover {
+  background: rgba(255, 255, 255, .12);
+}
+
+.toastUndo:disabled {
+  opacity: .7;
+  cursor: default;
+}
+
+.toastUndo svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+@media (max-width: 520px) {
+  .toastContainer {
+    right: 10px;
+    bottom: 14px;
+    left: 10px;
+  }
+
+  .toast {
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .toastIcon {
+    flex-basis: 34px;
+    width: 34px;
+    height: 34px;
+  }
+
+  .toastText strong {
+    font-size: 13px;
+  }
+
+  .toastText span {
+    font-size: 11px;
+  }
+
+  .toastUndo,
+  .toastOpenLink {
+    min-height: 34px;
+    padding: 0 8px;
+    font-size: 11px;
   }
 }
