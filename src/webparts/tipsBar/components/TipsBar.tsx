@@ -60,6 +60,19 @@ const CloseIcon: React.FC = () => (
   </svg>
 );
 
+const ExternalLinkIcon: React.FC = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M14 4h6v6M20 4l-9 9" />
+    <path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />
+  </svg>
+);
+
+const CheckIcon: React.FC = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="m5 12 4 4L19 6" />
+  </svg>
+);
+
 const TipsBar: React.FC<ITipsBarProps> = (props: ITipsBarProps) => {
   const [readTipIds, setReadTipIds] = React.useState<string[]>([]);
   const [isListOpen, setIsListOpen] = React.useState<boolean>(false);
@@ -137,7 +150,7 @@ const TipsBar: React.FC<ITipsBarProps> = (props: ITipsBarProps) => {
       {isListOpen && (
         <div className={styles.backdrop} onClick={() => setIsListOpen(false)}>
           <section
-            className={styles.dialog}
+            className={`${styles.dialog} ${styles.listDialog}`}
             role="dialog"
             aria-modal="true"
             aria-label="הטיפים שלי"
@@ -182,30 +195,36 @@ const TipsBar: React.FC<ITipsBarProps> = (props: ITipsBarProps) => {
             aria-label={activeTip.title}
             onClick={(event: React.MouseEvent<HTMLElement>) => event.stopPropagation()}
           >
-            <button
-              type="button"
-              className={styles.closeButton}
-              onClick={() => setActiveTip(undefined)}
-              aria-label="סגירה"
-            >
-              <CloseIcon />
-            </button>
-            <div className={styles.dialogTipMeta}>
-              <span className={styles.listIcon} aria-hidden="true"><LightbulbIcon /></span>
-              <span>טיפ · יום {activeTip.day} · {activeTip.category}</span>
-            </div>
-            <h2 className={styles.dialogTipTitle}>{activeTip.title}</h2>
-            <p className={styles.dialogTipText}>{activeTip.text}</p>
-            {activeTip.link && (
-              <a className={styles.tipLink} href={activeTip.link} target="_blank" rel="noopener noreferrer">
-                {activeTip.linkLabel || 'לפתיחת הקישור'}
-              </a>
-            )}
-            <div className={styles.dialogFooter}>
-              <button type="button" className={styles.ackButton} onClick={markTipRead}>
-                קיבלתי
+            <div className={styles.tipDialogHeader}>
+              <button
+                type="button"
+                className={styles.closeButton}
+                onClick={() => setActiveTip(undefined)}
+                aria-label="סגירה"
+              >
+                <CloseIcon />
               </button>
-              <small>הטיפ יישאר בדף הבית עד הטיפ הבא.</small>
+              <div className={styles.dialogTipMeta}>
+                <span className={styles.dialogTipIcon} aria-hidden="true"><LightbulbIcon /></span>
+                <span>טיפ · יום {activeTip.day} · {activeTip.category}</span>
+              </div>
+            </div>
+            <div className={styles.tipDialogBody}>
+              <h2 className={styles.dialogTipTitle}>{activeTip.title}</h2>
+              <p className={styles.dialogTipText}>{activeTip.text}</p>
+              {activeTip.link && (
+                <a className={styles.tipLink} href={activeTip.link} target="_blank" rel="noopener noreferrer">
+                  <ExternalLinkIcon />
+                  {activeTip.linkLabel || 'לפתיחת הקישור'}
+                </a>
+              )}
+              <div className={styles.dialogFooter}>
+                <button type="button" className={styles.ackButton} onClick={markTipRead}>
+                  <CheckIcon />
+                  קיבלתי
+                </button>
+                <small>הטיפ יישאר בדף הבית עד הטיפ הבא.</small>
+              </div>
             </div>
           </section>
         </div>

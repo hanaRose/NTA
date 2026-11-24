@@ -45,12 +45,17 @@
   [data-automation-id="CanvasZone-SectionContainer"]:has([data-sp-web-part-id="b19fc948-610a-4a2d-b787-c04e71bed16a"]),
   [data-automation-id="CanvasZone-SectionContainer"]:has([data-sp-web-part-id="e29c68f3-c2d8-4fa8-9d6f-55b72c7f5a1d"]),
   [data-automation-id="CanvasZone-SectionContainer"]:has([data-sp-web-part-id="ef8af61a-f786-40f5-9851-e34f2fd89d4c"]),
+  [data-automation-id="CanvasZone-SectionContainer"]:has([data-sp-web-part-id="e29c68f3-c2d8-4fa8-9d6f-55b72c7f5a1d"]),
   [data-automation-id="CanvasZone-SectionContainer"]:has([data-sp-web-part-id="2c0d7af4-71aa-4801-b400-e7b7e1a5d17b"]) {
     background-color: #F4F7FC !important;
      
   }
 
   [data-automation-id="CanvasZone"]{
+    background-color: #F4F7FC !important;
+  }
+
+  [data-sp-web-part-id="e29c68f3-c2d8-4fa8-9d6f-55b72c7f5a1d"] {
     background-color: #F4F7FC !important;
   }
 

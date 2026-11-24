@@ -9,7 +9,7 @@
   border: 1px solid #dde3ec;
   border-radius: 20px;
   color: #232a5c;
-  background-color: #F4F7FC;
+  background-color: #FFF6E0;
   font-family: Heebo, "Segoe UI", Arial, sans-serif;
 }
 
@@ -51,6 +51,7 @@
 .tipText {
   flex: 1 1 auto;
   min-width: 0;
+  text-align: right;
 }
 
 .tipLabel {
@@ -158,6 +159,16 @@
   outline-offset: 3px;
 }
 
+@keyframes fadein {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes popin {
+  from { opacity: 0; transform: translateY(10px) scale(.98); }
+  to { opacity: 1; transform: none; }
+}
+
 .backdrop {
   position: fixed;
   inset: 0;
@@ -166,26 +177,36 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: rgba(14, 18, 54, .58);
+  background: rgba(14, 18, 54, .34);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: fadein .18s ease;
 }
 
 .dialog {
   position: relative;
   box-sizing: border-box;
-  width: min(620px, 100%);
-  max-height: min(80vh, 720px);
+  width: 560px;
+  max-width: 100%;
+  max-height: calc(100vh - 48px);
   overflow: auto;
-  padding: 28px;
-  border-radius: 22px;
+  border-radius: 24px;
   color: #232a5c;
   background: #fff;
-  box-shadow: 0 24px 70px rgba(10, 15, 44, .3);
+  box-shadow: 0 30px 80px -20px rgba(14, 18, 54, .55);
+  animation: popin .2s ease;
+  text-align: right;
+}
+
+.listDialog {
+  padding: 28px;
 }
 
 .closeButton {
   position: absolute;
-  top: 16px;
-  left: 16px;
+  z-index: 2;
+  top: 14px;
+  left: 14px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -193,15 +214,14 @@
   height: 40px;
   padding: 0;
   border: 0;
-  border-radius: 10px;
-  color: #5a6285;
-  background: transparent;
+  border-radius: 12px;
+  color: #232a5c;
+  background: #f1f4fa;
   cursor: pointer;
 }
 
 .closeButton:hover {
-  color: #232a5c;
-  background: #eef2f8;
+  background: #e3e8f3;
 }
 
 .dialogHeading {
@@ -241,7 +261,7 @@
 .listIcon {
   width: 40px;
   height: 40px;
-  background: #fff1cf;
+  background: #f2b33d;
 }
 
 .listIcon svg {
@@ -274,8 +294,8 @@
 .listReadButton {
   min-height: 36px;
   padding: 0 15px;
-  color: #232a5c;
-  background: #eef2f8;
+  color: #fff;
+  background: #232a5c;
 }
 
 .listReadButton:hover {
@@ -286,47 +306,113 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 18px;
   color: #75642f;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.tipDialogHeader {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 30px 30px 22px;
+  border-bottom: 1px solid #f3e2b5;
+  background: #fff6e0;
+}
+
+.dialogTipIcon {
+  display: inline-flex;
+  flex: 0 0 58px;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  color: #232a5c;
+  background: #f2b33d;
+}
+
+.dialogTipIcon svg {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.tipDialogBody {
+  padding: 22px 30px 28px;
+  text-align: right;
 }
 
 .dialogTipTitle {
-  margin-bottom: 12px;
+  margin: 0;
+  font-size: 26px;
+  font-weight: 900;
 }
 
 .dialogTipText {
-  margin: 0;
-  color: #4a5275;
-  font-size: 16px;
-  line-height: 1.7;
+  margin: 10px 0 0;
+  color: #3a4270;
+  font-size: 17px;
+  line-height: 1.65;
   white-space: pre-line;
 }
 
 .tipLink {
   display: inline-flex;
-  margin-top: 18px;
-  color: #1565c0;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  margin-top: 16px;
+  padding: 0 16px;
+  border: 1px solid #d5dbea;
+  border-radius: 999px;
+  color: #232a5c;
+  text-decoration: none;
   font-weight: 700;
+}
+
+.tipLink:hover {
+  background: #f1f4fa;
+}
+
+.tipLink svg,
+.ackButton svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
 }
 
 .dialogFooter {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   margin-top: 24px;
-  padding-top: 18px;
-  border-top: 1px solid #eef1f6;
 }
 
 .ackButton {
-  color: #fff;
-  background: #232a5c;
+  gap: 6px;
+  min-height: 42px;
+  padding: 0 18px;
+  color: #232a5c;
+  background: #f2b33d;
+}
+
+.ackButton:hover {
+  background: #ffc94d;
 }
 
 .dialogFooter small {
   color: #5a6285;
+  font-size: 13px;
   line-height: 1.45;
 }
 
@@ -370,8 +456,17 @@
     padding: 12px;
   }
 
-  .dialog {
+  .listDialog {
     padding: 24px 18px;
+    text-align: right;
+  }
+
+  .tipDialogHeader {
+    padding: 24px 18px 18px;
+  }
+
+  .tipDialogBody {
+    padding: 18px;
   }
 
   .tipList li {
