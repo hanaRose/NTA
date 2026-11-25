@@ -1,8 +1,7 @@
+import { IOnboardingTip } from '../../../services/tips/IOnboardingTip';
+
 export interface ITipsBarProps {
-  tipTitle: string;
-  tipText: string;
-  tipDay: number;
-  category: string;
-  tipLink: string;
-  tipLinkLabel: string;
+  tips: IOnboardingTip[];
+  isLoading: boolean;
+  loadError?: string;
 }

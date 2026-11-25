@@ -3,7 +3,7 @@
   "solution": {
     "name": "nta-admin-client-side-solution",
     "id": "f330220d-d919-4f52-8df2-f9d02e1d17d3",
-    "version": "1.0.20.0",
+    "version": "1.0.21.0",
     "includeClientSideAssets": true,
     "skipFeatureDeployment": true,
     "developer": {

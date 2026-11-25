@@ -84,6 +84,12 @@
   line-height: 1.35;
 }
 
+.tipError {
+  margin-top: 4px;
+  color: #b42332;
+  font-size: 12px;
+}
+
 .actions {
   display: flex;
   align-items: center;
@@ -117,6 +123,16 @@
 .readButton:hover,
 .ackButton:hover {
   background: #1565c0;
+}
+
+.readButton:disabled {
+  color: #5a6285;
+  background: #eef2f8;
+  cursor: default;
+}
+
+.readButton:disabled:hover {
+  background: #eef2f8;
 }
 
 .readButtonRead {
@@ -241,6 +257,20 @@
   line-height: 1.5;
 }
 
+.dialogMessage,
+.dialogError {
+  padding: 18px 20px;
+  border-radius: 12px;
+  color: #5a6285;
+  background: #f4f7fc;
+  line-height: 1.5;
+}
+
+.dialogError {
+  border-inline-start: 4px solid #e8414f;
+  color: #b42332;
+}
+
 .tipList {
   display: flex;
   flex-direction: column;
@@ -299,6 +329,7 @@
 }
 
 .listReadButton:hover {
+  color: #232a5c;
   background: #dde3ec;
 }
 
@@ -380,6 +411,58 @@
   background: #f1f4fa;
 }
 
+.tipQr {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 18px;
+  padding: 14px;
+  border-radius: 16px;
+  background: #f4f7fc;
+}
+
+.tipQrImage,
+.tipQrMissing {
+  box-sizing: border-box;
+  flex: 0 0 144px;
+  width: 144px;
+  height: 144px;
+  padding: 8px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: inset 0 0 0 1px #dde3ec;
+}
+
+.tipQrImage {
+  object-fit: contain;
+}
+
+.tipQrMissing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #b42332;
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.tipQrText {
+  min-width: 0;
+}
+
+.tipQrText strong {
+  display: block;
+  font-size: 15.5px;
+}
+
+.tipQrText > span {
+  display: block;
+  margin: 2px 0 8px;
+  color: #5a6285;
+  font-size: 13.5px;
+}
+
 .tipLink svg,
 .ackButton svg {
   width: 18px;
@@ -439,6 +522,12 @@
 
   .tipTitle {
     font-size: 17px;
+  }
+
+  .tipQr {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
   }
 
   .actions {

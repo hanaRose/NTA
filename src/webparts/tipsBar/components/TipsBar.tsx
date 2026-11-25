@@ -1,45 +1,7 @@
 import * as React from 'react';
 import styles from './TipsBar.module.scss';
+import { IOnboardingTip } from '../../../services/tips/IOnboardingTip';
 import { ITipsBarProps } from './ITipsBarProps';
-
-interface ITipItem {
-  id: string;
-  title: string;
-  text: string;
-  day: number;
-  category: string;
-  link?: string;
-  linkLabel?: string;
-}
-
-const previousTips: ITipItem[] = [
-  {
-    id: 'phone',
-    title: 'קבלת הטלפון הנייד',
-    text: 'את הטלפון הנייד מקבלים בקליטה המרוכזת, מצוות הלוגיסטיקה. שאלה על המכשיר? פותחים קריאה ללוגיסטיקה.',
-    day: 1,
-    category: 'מרכז לוגיסטי'
-  },
-  {
-    id: 'whatsapp',
-    title: 'הצטרפות לקבוצת הוואטסאפ של נת״ע',
-    text: 'בקבוצה מתפרסמים עדכונים שוטפים, הודעות לעובדים ואירועי החברה.',
-    day: 2,
-    category: 'מרכז לוגיסטי'
-  },
-  {
-    id: 'green',
-    title: 'ריקון המקרר וסביבה ירוקה',
-    text: 'ביום חמישי מרוקן המקרר במטבחון. ובכל יום: משתמשים בכלים רב פעמיים ומכניסים אותם למדיח.',
-    day: 5,
-    category: 'מרכז לוגיסטי'
-  }
-];
-
-function readDay(value: number): number {
-  const parsedValue: number = Math.floor(Number(value));
-  return Number.isFinite(parsedValue) && parsedValue > 0 ? parsedValue : 1;
-}
 
 const LightbulbIcon: React.FC = () => (
   <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -73,22 +35,23 @@ const CheckIcon: React.FC = () => (
   </svg>
 );
 
+function formatJourneyDay(day: number): string {
+  return day === 0 ? 'טרום קליטה' : `יום ${day}`;
+}
+
 const TipsBar: React.FC<ITipsBarProps> = (props: ITipsBarProps) => {
-  const [readTipIds, setReadTipIds] = React.useState<string[]>([]);
+  const [readTipIds, setReadTipIds] = React.useState<number[]>([]);
   const [isListOpen, setIsListOpen] = React.useState<boolean>(false);
-  const [activeTip, setActiveTip] = React.useState<ITipItem | undefined>();
-  const featuredTip: ITipItem = {
-    id: 'featured',
-    title: props.tipTitle || 'לוח חגים וחופשות',
-    text: props.tipText || 'לוח החגים והחופשות של השנה כבר בפורטל. כדאי לשמור אותו במועדפים ולתכנן חופשות מראש.',
-    day: readDay(props.tipDay),
-    category: props.category || 'תנאי הנסיעה',
-    link: props.tipLink,
-    linkLabel: props.tipLinkLabel || 'ללוח החופשות בפורטל'
-  };
-  const tips: ITipItem[] = [featuredTip].concat(previousTips);
-  const isFeaturedRead: boolean = readTipIds.indexOf(featuredTip.id) >= 0;
-  const listLabel: string = isFeaturedRead ? 'הטיפ האחרון' : 'טיפ חדש';
+  const [activeTip, setActiveTip] = React.useState<IOnboardingTip | undefined>();
+  const tips: IOnboardingTip[] = props.tips;
+  const featuredTip: IOnboardingTip | undefined = tips.length > 0 ? tips[0] : undefined;
+  const isFeaturedRead: boolean = featuredTip !== undefined &&
+    readTipIds.indexOf(featuredTip.id) >= 0;
+  const listLabel: string = props.isLoading
+    ? 'טוען טיפים'
+    : (featuredTip
+      ? (isFeaturedRead ? 'הטיפ האחרון' : 'טיפ חדש')
+      : (props.loadError ? 'שגיאה בטעינת הטיפים' : 'אין טיפים חדשים'));
 
   React.useEffect(() => {
     if (!isListOpen && !activeTip) {
@@ -106,7 +69,7 @@ const TipsBar: React.FC<ITipsBarProps> = (props: ITipsBarProps) => {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [activeTip, isListOpen]);
 
-  const openTip = (tip: ITipItem): void => {
+  const openTip = (tip: IOnboardingTip): void => {
     setIsListOpen(false);
     setActiveTip(tip);
   };
@@ -124,16 +87,28 @@ const TipsBar: React.FC<ITipsBarProps> = (props: ITipsBarProps) => {
       <div className={styles.tipText}>
         <div className={styles.tipLabel}>
           <strong>{listLabel}</strong>
-          <span>יום {featuredTip.day} · {featuredTip.category}</span>
+          {featuredTip && <span>{formatJourneyDay(featuredTip.day)} · {featuredTip.category}</span>}
           {isFeaturedRead && <span className={styles.readLabel}>נקרא</span>}
         </div>
-        <div className={styles.tipTitle}>{featuredTip.title}</div>
+        <div className={styles.tipTitle}>
+          {featuredTip
+            ? featuredTip.title
+            : (props.isLoading
+              ? 'טוען את הטיפים...'
+              : (props.loadError ? 'לא ניתן לטעון את הטיפים' : 'אין כרגע טיפים שפורסמו.'))}
+        </div>
+        {props.loadError && (
+          <div className={styles.tipError} role="alert">
+            לא ניתן לטעון את הטיפים: {props.loadError}
+          </div>
+        )}
       </div>
       <div className={styles.actions}>
         <button
           type="button"
           className={`${styles.readButton} ${isFeaturedRead ? styles.readButtonRead : ''}`}
-          onClick={() => openTip(featuredTip)}
+          onClick={() => featuredTip && openTip(featuredTip)}
+          disabled={!featuredTip || props.isLoading}
         >
           {isFeaturedRead ? 'לקריאה שוב' : 'לקריאת הטיפ'}
         </button>
@@ -168,20 +143,33 @@ const TipsBar: React.FC<ITipsBarProps> = (props: ITipsBarProps) => {
               <h2>הטיפים שלי</h2>
               <p>כל הטיפים שקיבלת במסע עד עכשיו.</p>
             </div>
-            <ul className={styles.tipList}>
-              {tips.map((tip: ITipItem) => (
-                <li key={tip.id}>
-                  <span className={styles.listIcon} aria-hidden="true"><LightbulbIcon /></span>
-                  <span className={styles.listText}>
-                    <strong>{tip.title}</strong>
-                    <span>יום {tip.day} · {tip.category} · {readTipIds.indexOf(tip.id) >= 0 ? 'נקרא' : 'עוד לא נקרא'}</span>
-                  </span>
-                  <button type="button" className={styles.listReadButton} onClick={() => openTip(tip)}>
-                    לקריאה
-                  </button>
-                </li>
-              ))}
-            </ul>
+            {props.isLoading ? (
+              <div className={styles.dialogMessage}>טוען את הטיפים...</div>
+            ) : props.loadError ? (
+              <div className={styles.dialogError} role="alert">
+                לא ניתן לטעון את הטיפים: {props.loadError}
+              </div>
+            ) : tips.length === 0 ? (
+              <div className={styles.dialogMessage}>אין כרגע טיפים שפורסמו.</div>
+            ) : (
+              <ul className={styles.tipList}>
+                {tips.map((tip: IOnboardingTip) => (
+                  <li key={tip.id}>
+                    <span className={styles.listIcon} aria-hidden="true"><LightbulbIcon /></span>
+                    <span className={styles.listText}>
+                      <strong>{tip.title}</strong>
+                      <span>
+                        {formatJourneyDay(tip.day)} · {tip.category} ·
+                        {' '}{readTipIds.indexOf(tip.id) >= 0 ? 'נקרא' : 'עוד לא נקרא'}
+                      </span>
+                    </span>
+                    <button type="button" className={styles.listReadButton} onClick={() => openTip(tip)}>
+                      לקריאה
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
         </div>
       )}
@@ -206,18 +194,42 @@ const TipsBar: React.FC<ITipsBarProps> = (props: ITipsBarProps) => {
               </button>
               <div className={styles.dialogTipMeta}>
                 <span className={styles.dialogTipIcon} aria-hidden="true"><LightbulbIcon /></span>
-                <span>טיפ · יום {activeTip.day} · {activeTip.category}</span>
+                <span>טיפ · {formatJourneyDay(activeTip.day)} · {activeTip.category}</span>
               </div>
             </div>
             <div className={styles.tipDialogBody}>
               <h2 className={styles.dialogTipTitle}>{activeTip.title}</h2>
               <p className={styles.dialogTipText}>{activeTip.text}</p>
-              {activeTip.link && (
+              {activeTip.showQr ? (
+                <div className={styles.tipQr}>
+                  {activeTip.qrImageUrl ? (
+                    <img
+                      className={styles.tipQrImage}
+                      src={activeTip.qrImageUrl}
+                      alt="קוד QR לפתיחת הקישור"
+                    />
+                  ) : (
+                    <div className={styles.tipQrMissing} role="alert">
+                      לא הוגדרה תמונת QR לטיפ הזה.
+                    </div>
+                  )}
+                  <div className={styles.tipQrText}>
+                    <strong>סורקים את הקוד בטלפון</strong>
+                    <span>הקוד פותח את הקישור ישירות בנייד.</span>
+                    {activeTip.link && (
+                      <a className={styles.tipLink} href={activeTip.link} target="_blank" rel="noopener noreferrer">
+                        <ExternalLinkIcon />
+                        {activeTip.linkLabel || 'לפתיחת הקישור'}
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ) : activeTip.link ? (
                 <a className={styles.tipLink} href={activeTip.link} target="_blank" rel="noopener noreferrer">
                   <ExternalLinkIcon />
                   {activeTip.linkLabel || 'לפתיחת הקישור'}
                 </a>
-              )}
+              ) : null}
               <div className={styles.dialogFooter}>
                 <button type="button" className={styles.ackButton} onClick={markTipRead}>
                   <CheckIcon />
